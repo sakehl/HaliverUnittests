@@ -1,0 +1,1302 @@
+domain WellFoundedOrder[T]  {
+  
+  function bounded(v: T): Bool 
+  
+  function decreasing(v1: T, v2: T): Bool 
+}
+
+domain IntOrder  {
+  
+  axiom {
+    (forall i: Int ::0 <= i == (bounded(i): Bool))
+  }
+  
+  axiom {
+    (forall i: Int ::(forall j: Int ::i < j == (decreasing(i, j): Bool)))
+  }
+}
+
+domain Void  {
+  
+  function unit(): Void 
+  
+  axiom {
+    (forall v: Void ::true ==> unit() == v)
+  }
+}
+
+domain $domain$_  {
+  
+  function _(unknown: Perm, unknown1: Perm): Perm interpretation "^"
+}
+
+domain $domain$to_int  {
+  
+  function to_int(to_int1: Perm): Int interpretation "to_int"
+}
+
+domain $domain$is_int  {
+  
+  function is_int(unknown2: Perm): Bool interpretation "is_int"
+}
+
+domain Block  {
+  
+  function block_length(b: Block): Int 
+  
+  function loc(b: Block, i: Int): Ref 
+  
+  function block_address(b: Block): Int 
+  
+  function loc_inv_1(r: Ref): Block 
+  
+  function loc_inv_2(r: Ref): Int 
+  
+  function addr_inv(address: Int): Block 
+  
+  axiom {
+    (forall b: Block ::block_length(b) >= 0)
+  }
+  
+  axiom {
+    (forall b: Block, i: Int ::
+      { loc(b, i) }
+      loc_inv_1(loc(b, i)) == b && loc_inv_2(loc(b, i)) == i)
+  }
+  
+  axiom {
+    (forall b: Block :: { block_address(b) } block_address(b) > 0)
+  }
+  
+  axiom {
+    (forall b: Block ::
+      { block_address(b) }
+      addr_inv(block_address(b)) == b)
+  }
+}
+
+domain Pointer  {
+  
+  function pointer_of(b: Block, offset: Int): Pointer 
+  
+  function pointer_block(p: Pointer): Block 
+  
+  function pointer_offset(p: Pointer): Int 
+  
+  function pointer_inv(r: Ref): Pointer 
+  
+  axiom {
+    (forall p: Pointer ::pointer_offset(p) >= 0 &&
+      pointer_offset(p) < block_length(pointer_block(p)))
+  }
+  
+  axiom {
+    (forall b: Block, offset: Int ::
+      { pointer_block(pointer_of(b, offset)) }
+      { pointer_offset(pointer_of(b, offset)) }
+      pointer_block(pointer_of(b, offset)) == b &&
+      pointer_offset(pointer_of(b, offset)) == offset)
+  }
+  
+  axiom {
+    (forall r: Ref :: { pointer_inv(r) } ptrDeref(pointer_inv(r)) == r)
+  }
+  
+  axiom {
+    (forall p: Pointer :: { ptrDeref(p) } pointer_inv(ptrDeref(p)) == p)
+  }
+  
+  axiom {
+    (forall p1: Pointer, p2: Pointer, stride1: Int ::
+      { ptrAddress(p1, stride1), ptrAddress(p2, stride1), pointer_block(p1),
+      pointer_block(p2) }
+      stride1 > 0 &&
+      (ptrAddress(p1, stride1) == ptrAddress(p2, stride1) &&
+      pointer_block(p1) == pointer_block(p2)) ==>
+      p1 == p2)
+  }
+  
+  axiom {
+    ptrAddAxiom()
+  }
+}
+
+domain Any  {
+  
+  
+}
+
+domain Option[T1]  {
+  
+  function none1(): Option[T1] 
+  
+  function some(x: T1): Option[T1] 
+  
+  function option_get(opt: Option[T1]): T1 
+  
+  axiom {
+    (forall x: T1 ::
+      { (some(x): Option[T1]) }
+      (none1(): Option[T1]) != (some(x): Option[T1]))
+  }
+  
+  axiom {
+    (forall x: T1 ::
+      { (some(x): Option[T1]) }
+      (option_get((some(x): Option[T1])): T1) == x)
+  }
+  
+  axiom {
+    (forall opt: Option[T1] ::
+      { (some((option_get(opt): T1)): Option[T1]) }
+      (some((option_get(opt): T1)): Option[T1]) == opt)
+  }
+}
+
+domain HalideDimensionT  {
+  
+  function index_halide_dimension_t(pointer: Pointer): Int 
+  
+  function min2(min3: HalideDimensionT): Pointer 
+  
+  function extent(extent1: HalideDimensionT): Pointer 
+  
+  function stride(stride1: HalideDimensionT): Pointer 
+  
+  function flags(flags1: HalideDimensionT): Pointer 
+  
+  function inv_min(min3: Pointer): HalideDimensionT 
+  
+  function inv_extent(extent1: Pointer): HalideDimensionT 
+  
+  function inv_stride(stride1: Pointer): HalideDimensionT 
+  
+  function inv_flags(flags1: Pointer): HalideDimensionT 
+  
+  axiom {
+    (forall i: HalideDimensionT, i1: HalideDimensionT ::
+      { min2(i), min2(i1) }
+      { extent(i), extent(i1) }
+      { stride(i), stride(i1) }
+      { flags(i), flags(i1) }
+      (min2(i) == min2(i1) ==> i == i1) &&
+      (extent(i) == extent(i1) ==> i == i1) &&
+      (stride(i) == stride(i1) ==> i == i1) &&
+      (flags(i) == flags(i1) ==> i == i1))
+  }
+  
+  axiom {
+    (forall i: HalideDimensionT :: { min2(i) } inv_min(min2(i)) == i)
+  }
+  
+  axiom {
+    (forall i: HalideDimensionT ::
+      { extent(i) }
+      inv_extent(extent(i)) == i)
+  }
+  
+  axiom {
+    (forall i: HalideDimensionT ::
+      { stride(i) }
+      inv_stride(stride(i)) == i)
+  }
+  
+  axiom {
+    (forall i: HalideDimensionT :: { flags(i) } inv_flags(flags(i)) == i)
+  }
+  
+  axiom {
+    (forall i: HalideDimensionT ::
+      { min2(i) }
+      index_halide_dimension_t(min2(i)) == 0)
+  }
+  
+  axiom {
+    (forall i: HalideDimensionT ::
+      { extent(i) }
+      index_halide_dimension_t(extent(i)) == 1)
+  }
+  
+  axiom {
+    (forall i: HalideDimensionT ::
+      { stride(i) }
+      index_halide_dimension_t(stride(i)) == 2)
+  }
+  
+  axiom {
+    (forall i: HalideDimensionT ::
+      { flags(i) }
+      index_halide_dimension_t(flags(i)) == 3)
+  }
+  
+  axiom {
+    (forall i: HalideDimensionT ::
+      { (value_as_int(i): Pointer) }
+      (value_as_int(i): Pointer) == min2(i))
+  }
+}
+
+domain HalideBufferInt32T  {
+  
+  function index_halide_buffer_int32_t(pointer: Pointer): Int 
+  
+  function dimensions(dimensions1: HalideBufferInt32T): Pointer 
+  
+  function dim(dim1: HalideBufferInt32T): Pointer 
+  
+  function host(host1: HalideBufferInt32T): Pointer 
+  
+  function inv_dimensions(dimensions1: Pointer): HalideBufferInt32T 
+  
+  function inv_dim(dim1: Pointer): HalideBufferInt32T 
+  
+  function inv_host(host1: Pointer): HalideBufferInt32T 
+  
+  axiom {
+    (forall i: HalideBufferInt32T, i1: HalideBufferInt32T ::
+      { dimensions(i), dimensions(i1) }
+      { dim(i), dim(i1) }
+      { host(i), host(i1) }
+      (dimensions(i) == dimensions(i1) ==> i == i1) &&
+      (dim(i) == dim(i1) ==> i == i1) &&
+      (host(i) == host(i1) ==> i == i1))
+  }
+  
+  axiom {
+    (forall i: HalideBufferInt32T ::
+      { dimensions(i) }
+      inv_dimensions(dimensions(i)) == i)
+  }
+  
+  axiom {
+    (forall i: HalideBufferInt32T :: { dim(i) } inv_dim(dim(i)) == i)
+  }
+  
+  axiom {
+    (forall i: HalideBufferInt32T :: { host(i) } inv_host(host(i)) == i)
+  }
+  
+  axiom {
+    (forall i: HalideBufferInt32T ::
+      { dimensions(i) }
+      index_halide_buffer_int32_t(dimensions(i)) == 0)
+  }
+  
+  axiom {
+    (forall i: HalideBufferInt32T ::
+      { dim(i) }
+      index_halide_buffer_int32_t(dim(i)) == 1)
+  }
+  
+  axiom {
+    (forall i: HalideBufferInt32T ::
+      { host(i) }
+      index_halide_buffer_int32_t(host(i)) == 2)
+  }
+  
+  axiom {
+    (forall i: HalideBufferInt32T ::
+      { (value_as_int(i): Pointer) }
+      (value_as_int(i): Pointer) == dimensions(i))
+  }
+}
+
+domain Value[V]  {
+  
+  function value_as_int(v: V): Pointer 
+}
+
+field halidedimensiont: HalideDimensionT
+
+field int64T: Int
+
+field halidebufferint32t: HalideBufferInt32T
+
+field int32T: Int
+
+field opt_pointer: Option[Pointer]
+
+field uint64T: Int
+
+field uintptrT: Int
+
+field uint16T: Int
+
+field int8T: Int
+
+field int16T: Int
+
+field intptrT: Int
+
+field uint8T: Int
+
+field int: Int
+
+field uint32T: Int
+
+function mPi(): Perm
+  decreases 
+{
+  314159265358979323846 * write / 100000000000000000000
+}
+
+function fabsf(x: Perm): Perm
+  decreases 
+  ensures result == (0 * write / 1 <= x ? x : -x * write)
+
+
+function sqrtf(x: Perm): Perm
+  requires 0 * write / 1 <= x
+  decreases 
+  ensures result == _(x, 5 * write / 10)
+
+
+function sinf(x: Perm): Perm
+  decreases 
+  ensures -1 * write / 1 <= result
+  ensures result <= 1 * write / 1
+
+
+function nondetfloat(): Perm
+  decreases 
+
+
+function asinf(x: Perm): Perm
+  requires -1 * write / 1 <= x
+  requires x <= 1 * write / 1
+  decreases 
+  ensures (2 * write / 1 != 0 * write / 1 ?
+      -mPi() * write / (2 * write / 1) :
+      nondetfloat()) <=
+    result
+  ensures result <=
+    (2 * write / 1 != 0 * write / 1 ?
+      mPi() / (2 * write / 1) :
+      nondetfloat())
+
+
+function cosf(x: Perm): Perm
+  decreases 
+  ensures -1 * write / 1 <= result
+  ensures result <= 1 * write / 1
+
+
+function acosf(x: Perm): Perm
+  requires -1 * write / 1 <= x
+  requires x <= 1 * write / 1
+  decreases 
+  ensures 0 * write / 1 <= result
+  ensures result <= mPi()
+
+
+function tanf(x: Perm): Perm
+  decreases 
+  ensures x == 0 * write / 1 ==> result == 0 * write / 1
+
+
+function atanf(x: Perm): Perm
+  decreases 
+  ensures (2 * write / 1 != 0 * write / 1 ?
+      -mPi() * write / (2 * write / 1) :
+      nondetfloat()) <=
+    result
+  ensures result <=
+    (2 * write / 1 != 0 * write / 1 ?
+      mPi() / (2 * write / 1) :
+      nondetfloat())
+
+
+function atan2f(x: Perm, y: Perm): Perm
+  decreases 
+  ensures -mPi() * write <= result
+  ensures result <= mPi()
+
+
+function sinhf(x: Perm): Perm
+  decreases 
+  ensures result == (expf(x) - expf(-x * write)) / 2
+
+
+function coshf(x: Perm): Perm
+  decreases 
+  ensures result == (expf(x) + expf(-x * write)) / 2
+
+
+function tanhf(x: Perm): Perm
+  decreases 
+  ensures result ==
+    (expf(x) - expf(-x * write)) / (expf(x) + expf(-x * write))
+
+
+function hypotf(x: Perm, y: Perm): Perm
+  decreases 
+  ensures result == powf(x * x + y * y, 5 * write / 10)
+
+
+function expf(x: Perm): Perm
+  decreases 
+  ensures result == powf(27182818284 * write / 10000000000, x)
+
+
+function logf(x: Perm): Perm
+  decreases 
+
+
+function powf(x: Perm, y: Perm): Perm
+  decreases 
+  ensures result == _(x, y)
+  ensures 0 * write / 1 < x ==> 0 * write / 1 < result
+
+
+function floorf(x: Perm): Perm
+  decreases 
+  ensures result == to_int(x) * write / 1
+
+
+function ceilf(x: Perm): Perm
+  decreases 
+  ensures result == (is_int(x) ? x : (to_int(x) + 1) * write / 1)
+
+
+function roundf(x: Perm): Perm
+  decreases 
+  ensures !(x < 0 * write / 1 && is_int(x - 5 * write / 10)) ==>
+    result == to_int(x + 5 * write / 10) * write / 1
+  ensures x < 0 * write / 1 && is_int(x - 5 * write / 10) ==>
+    result == x - 5 * write / 10
+
+
+function fabs(x: Perm): Perm
+  decreases 
+  ensures result == (0 * write / 1 <= x ? x : -x * write)
+
+
+function sqrt(x: Perm): Perm
+  requires 0 * write / 1 <= x
+  decreases 
+  ensures result == pow(x, 5 * write / 10)
+
+
+function sin(x: Perm): Perm
+  decreases 
+  ensures -1 * write / 1 <= result
+  ensures result <= 1 * write / 1
+
+
+function asin(x: Perm): Perm
+  requires -1 * write / 1 <= x
+  requires x <= 1 * write / 1
+  decreases 
+  ensures (2 * write / 1 != 0 * write / 1 ?
+      -mPi() * write / (2 * write / 1) :
+      nondetfloat()) <=
+    result
+  ensures result <=
+    (2 * write / 1 != 0 * write / 1 ?
+      mPi() / (2 * write / 1) :
+      nondetfloat())
+
+
+function cos(x: Perm): Perm
+  decreases 
+  ensures -1 * write / 1 <= result
+  ensures result <= 1 * write / 1
+
+
+function acos(x: Perm): Perm
+  requires -1 * write / 1 <= x
+  requires x <= 1 * write / 1
+  decreases 
+  ensures 0 * write / 1 <= result
+  ensures result <= mPi()
+
+
+function tan(x: Perm): Perm
+  decreases 
+  ensures x == 0 * write / 1 ==> result == 0 * write / 1
+
+
+function atan(x: Perm): Perm
+  decreases 
+  ensures (2 * write / 1 != 0 * write / 1 ?
+      -mPi() * write / (2 * write / 1) :
+      nondetfloat()) <=
+    result
+  ensures result <=
+    (2 * write / 1 != 0 * write / 1 ?
+      mPi() / (2 * write / 1) :
+      nondetfloat())
+
+
+function atan2(x: Perm, y: Perm): Perm
+  decreases 
+  ensures -mPi() * write <= result
+  ensures result <= mPi()
+
+
+function sinh(x: Perm): Perm
+  decreases 
+
+
+function cosh(x: Perm): Perm
+  decreases 
+  ensures result == (exp(x) + exp(-x * write)) / 2
+
+
+function tanh(x: Perm): Perm
+  decreases 
+  ensures result == (exp(x) - exp(-x * write)) / (exp(x) + exp(-x * write))
+
+
+function hypot(x: Perm, y: Perm): Perm
+  decreases 
+  ensures result == pow(x * x + y * y, 5 * write / 10)
+
+
+function exp(x: Perm): Perm
+  decreases 
+  ensures result == pow(27182818284 * write / 10000000000, x)
+
+
+function log(x: Perm): Perm
+  decreases 
+
+
+function pow(x: Perm, y: Perm): Perm
+  decreases 
+  ensures result == _(x, y)
+  ensures 0 * write / 1 < x ==> 0 * write / 1 < result
+
+
+function floor(x: Perm): Perm
+  decreases 
+  ensures result == to_int(x) * write / 1
+
+
+function ceil(x: Perm): Perm
+  decreases 
+  ensures result == (is_int(x) ? x : (to_int(x) + 1) * write / 1)
+
+
+function round(x: Perm): Perm
+  decreases 
+  ensures !(x < 0 * write / 1 && is_int(x - 5 * write / 10)) ==>
+    result == to_int(x + 5 * write / 10) * write / 1
+  ensures x < 0 * write / 1 && is_int(x - 5 * write / 10) ==>
+    result == x - 5 * write / 10
+
+
+function ptrDeref(p: Pointer): Ref
+  decreases 
+{
+  loc(pointer_block(p), pointer_offset(p))
+}
+
+function ptrAdd(p: Pointer, offset: Int): Pointer
+  requires 0 <= pointer_offset(p) + offset
+  requires pointer_offset(p) + offset < block_length(pointer_block(p))
+  decreases 
+  ensures [offset == 0 ==> result == p, true]
+{
+  pointer_of(pointer_block(p), pointer_offset(p) + offset)
+}
+
+function ptrAddAxiom(): Bool
+  decreases 
+  ensures (forall p1: Pointer, offset: Int, i: Int ::
+      { ptrAdd(ptrAdd(p1, offset), i) }
+      0 <= pointer_offset(p1) + offset &&
+      pointer_offset(p1) + offset < block_length(pointer_block(p1)) &&
+      0 <= i &&
+      i < block_length(pointer_block(p1)) - pointer_offset(p1) - offset ==>
+      ptrAdd(ptrAdd(p1, offset), i) == ptrAdd(p1, offset + i))
+{
+  true
+}
+
+function ptrAddress(p: Pointer, stride1: Int): Int
+  decreases 
+  ensures stride1 > 0 ==> result > 0
+  ensures [result <= 18446744073709551615, true]
+{
+  block_address(pointer_block(p)) + pointer_offset(p) * stride1
+}
+
+function ptrFromAddress(address: Int, stride1: Int): Pointer
+  requires stride1 > 0
+  decreases 
+  ensures ptrAddress(result, stride1) == address
+
+
+function anyAs(t: Any): Any
+  decreases 
+
+
+function asAny(t: Any): Any
+  decreases 
+  ensures anyAs(result) == t
+
+
+function optGet(opt: Option[Any]): Any
+  requires opt != (none1(): Option[Any])
+  decreases 
+  ensures (some(result): Option[Any]) == opt
+{
+  (option_get(opt): Any)
+}
+
+function optOrElse(opt: Option[Any], alt: Any): Any
+  decreases 
+  ensures opt == (none1(): Option[Any]) ==> result == alt
+  ensures opt != (none1(): Option[Any]) ==> result == optGet(opt)
+{
+  (opt == (none1(): Option[Any]) ? alt : optGet(opt))
+}
+
+function max(x: Int, y: Int): Int
+{
+  (y < x ? x : y)
+}
+
+function min(x: Int, y: Int): Int
+{
+  (y < x ? y : x)
+}
+
+function max1(x: Perm, y: Perm): Perm
+{
+  (y < x ? x : y)
+}
+
+function min1(x: Perm, y: Perm): Perm
+{
+  (y < x ? y : x)
+}
+
+function abs(x: Int): Int
+{
+  (0 <= x ? x : -x)
+}
+
+function abs1(x: Perm): Perm
+{
+  (0 * write / 1 <= x ? x : -x * write)
+}
+
+function hdiv(x: Int, y: Int): Int
+{
+  (y == 0 ? 0 : x \ y)
+}
+
+function hmod(x: Int, y: Int): Int
+{
+  (y == 0 ? 0 : x % y)
+}
+
+function lemmaNonlinear(a: Int, b: Int, maxA: Int): Bool
+  requires 0 <= a
+  requires 0 < b
+  requires a < maxA
+  decreases b
+  ensures a * b <= (maxA - 1) * b
+  ensures result
+
+
+function lemma2dAccess(a: Int, minA: Int, strideA: Int, extentA: Int, b: Int,
+  minB: Int, strideB: Int, extentB: Int): Bool
+  requires minA <= a
+  requires a - minA < extentA
+  requires minB <= b
+  requires b - minB < extentB
+  requires 0 < strideA
+  requires extentA * strideA <= strideB
+  decreases 
+  ensures 0 <= (b - minB) * strideB
+  ensures 0 <= (a - minA) * strideA + (b - minB) * strideB
+  ensures (a - minA) * strideA + (b - minB) * strideB < strideB * extentB
+  ensures result
+
+
+function lemma3dAccess(a: Int, minA: Int, strideA: Int, extentA: Int, b: Int,
+  minB: Int, strideB: Int, extentB: Int, c: Int, minC: Int, strideC: Int, extentC: Int): Bool
+  requires minA <= a
+  requires a - minA < extentA
+  requires minB <= b
+  requires b - minB < extentB
+  requires minC <= c
+  requires c - minC < extentC
+  requires 0 < strideA
+  requires extentA * strideA <= strideB
+  requires extentB * strideB <= strideC
+  decreases 
+  ensures 0 <=
+    (a - minA) * strideA + (b - minB) * strideB + (c - minC) * strideC
+  ensures (a - minA) * strideA + (b - minB) * strideB +
+    (c - minC) * strideC <
+    strideC * extentC
+  ensures result
+
+
+function lemma4dAccess(a: Int, minA: Int, strideA: Int, extentA: Int, b: Int,
+  minB: Int, strideB: Int, extentB: Int, c: Int, minC: Int, strideC: Int, extentC: Int,
+  d: Int, minD: Int, strideD: Int, extentD: Int): Bool
+  requires minA <= a
+  requires a - minA < extentA
+  requires minB <= b
+  requires b - minB < extentB
+  requires minC <= c
+  requires c - minC < extentC
+  requires minD <= d
+  requires d - minD < extentD
+  requires 0 < strideA
+  requires extentA * strideA <= strideB
+  requires extentB * strideB <= strideC
+  requires extentC * strideC <= strideD
+  decreases 
+  ensures 0 <=
+    (a - minA) * strideA + (b - minB) * strideB + (c - minC) * strideC +
+    (d - minD) * strideD
+  ensures (a - minA) * strideA + (b - minB) * strideB +
+    (c - minC) * strideC +
+    (d - minD) * strideD <
+    strideD * extentD
+  ensures result
+
+
+function lemma5dAccess(a: Int, minA: Int, strideA: Int, extentA: Int, b: Int,
+  minB: Int, strideB: Int, extentB: Int, c: Int, minC: Int, strideC: Int, extentC: Int,
+  d: Int, minD: Int, strideD: Int, extentD: Int, e: Int, minE: Int, strideE: Int,
+  extentE: Int): Bool
+  requires minA <= a
+  requires a - minA < extentA
+  requires minB <= b
+  requires b - minB < extentB
+  requires minC <= c
+  requires c - minC < extentC
+  requires minD <= d
+  requires d - minD < extentD
+  requires minE <= e
+  requires e - minE < extentE
+  requires 0 < strideA
+  requires extentA * strideA <= strideB
+  requires extentB * strideB <= strideC
+  requires extentC * strideC <= strideD
+  requires extentD * strideD <= strideE
+  decreases 
+  ensures 0 <=
+    (a - minA) * strideA + (b - minB) * strideB + (c - minC) * strideC +
+    (d - minD) * strideD +
+    (e - minE) * strideE
+  ensures (a - minA) * strideA + (b - minB) * strideB +
+    (c - minC) * strideC +
+    (d - minD) * strideD +
+    (e - minE) * strideE <
+    strideE * extentE
+  ensures result
+
+
+function split(xi: Int, xo: Int, xmin: Int, factor: Int): Int
+{
+  xo * factor + xi + xmin
+}
+
+function sizeof_struct_unknown_1166551775(): Int
+  decreases 
+
+
+function sizeof_struct_unknown_1354715579(): Int
+  decreases 
+
+
+function sizeof_int(): Int
+  decreases 
+  ensures 2 <= result
+
+
+function pureOut(x: Int): Int
+
+
+function scale(amount: Perm): Perm
+  requires amount >= 0 * write
+  decreases 
+  ensures result >= 0 * write
+{
+  amount
+}
+
+function optGet1(opt: Option[Pointer]): Pointer
+  requires opt != (none1(): Option[Pointer])
+  decreases 
+  ensures (some(result): Option[Pointer]) == opt
+{
+  (option_get(opt): Pointer)
+}
+
+function type(type1: Ref): Int
+  decreases 
+  ensures result >= 0
+  ensures result <= 2
+  ensures type1 == null ==> result == 0
+  ensures type1 != null ==> result != 0
+
+
+function subtype(subtype1: Int, subtype2: Int): Bool
+  requires subtype1 >= 0
+  requires subtype1 <= 2
+  requires subtype2 >= 0
+  requires subtype2 <= 2
+  decreases 
+{
+  (subtype1 == 0 ==> true) &&
+  ((subtype1 == 1 ==> subtype2 == 1) && (subtype1 == 2 ==> subtype2 == 2))
+}
+
+method assert1(tid: Int, expression: Bool) returns (res: Void)
+  requires expression
+
+
+method printf(tid: Int, format: Option[Pointer]) returns (res: Int)
+
+
+method vercorsMalloc(tid: Int, size: Int) returns (res: Option[Pointer])
+
+
+method vercorsFree(tid: Int, ptr: Option[Pointer]) returns (res: Void)
+
+
+method pureFuncNoBoundsMem(tid: Int, nx: Int, ny: Int, minx: Int, miny: Int,
+  outBuffer: Option[Pointer])
+  returns (res: Int)
+  requires 0 < nx
+  requires (let p ==
+      (1 * write / 2) in
+      (let nDims ==
+        (2) in
+        outBuffer != (none1(): Option[Pointer]) &&
+        block_length(pointer_block(optGet1(outBuffer))) -
+        pointer_offset(optGet1(outBuffer)) ==
+        1 &&
+        acc(ptrDeref(ptrAdd(optGet1(outBuffer), 0)).halidebufferint32t, scale(write) *
+        p) &&
+        acc(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer), 0)).halidebufferint32t),
+        0)).opt_pointer, scale(write) * p) &&
+        ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer), 0)).halidebufferint32t),
+        0)).opt_pointer !=
+        (none1(): Option[Pointer]) &&
+        block_length(pointer_block(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer),
+        0)).halidebufferint32t), 0)).opt_pointer))) -
+        pointer_offset(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer),
+        0)).halidebufferint32t), 0)).opt_pointer)) ==
+        nDims &&
+        acc(ptrDeref(ptrAdd(host(ptrDeref(ptrAdd(optGet1(outBuffer), 0)).halidebufferint32t),
+        0)).opt_pointer, scale(write) * p) &&
+        ptrDeref(ptrAdd(host(ptrDeref(ptrAdd(optGet1(outBuffer), 0)).halidebufferint32t),
+        0)).opt_pointer !=
+        (none1(): Option[Pointer])))
+  requires (let dim1 ==
+      (ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer), 0)).halidebufferint32t),
+      0)).opt_pointer) in
+      (let p ==
+        (1 * write / 2) in
+        (let i ==
+          (0) in
+          acc(ptrDeref(ptrAdd(optGet1(dim1), i)).halidedimensiont, scale(write) *
+          (1 * write / 2)) &&
+          acc(ptrDeref(ptrAdd(min2(ptrDeref(ptrAdd(optGet1(dim1), i)).halidedimensiont),
+          0)).int, scale(write) * (1 * write / 2)) &&
+          acc(ptrDeref(ptrAdd(stride(ptrDeref(ptrAdd(optGet1(dim1), i)).halidedimensiont),
+          0)).int, scale(write) * (1 * write / 2)) &&
+          acc(ptrDeref(ptrAdd(extent(ptrDeref(ptrAdd(optGet1(dim1), i)).halidedimensiont),
+          0)).int, scale(write) * (1 * write / 2)) &&
+          0 <
+          ptrDeref(ptrAdd(extent(ptrDeref(ptrAdd(optGet1(dim1), i)).halidedimensiont),
+          0)).int)))
+  requires (let dim1 ==
+      (ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer), 0)).halidebufferint32t),
+      0)).opt_pointer) in
+      (let p ==
+        (1 * write / 2) in
+        (let i ==
+          (1) in
+          acc(ptrDeref(ptrAdd(optGet1(dim1), i)).halidedimensiont, scale(write) *
+          (1 * write / 2)) &&
+          acc(ptrDeref(ptrAdd(min2(ptrDeref(ptrAdd(optGet1(dim1), i)).halidedimensiont),
+          0)).int, scale(write) * (1 * write / 2)) &&
+          acc(ptrDeref(ptrAdd(stride(ptrDeref(ptrAdd(optGet1(dim1), i)).halidedimensiont),
+          0)).int, scale(write) * (1 * write / 2)) &&
+          acc(ptrDeref(ptrAdd(extent(ptrDeref(ptrAdd(optGet1(dim1), i)).halidedimensiont),
+          0)).int, scale(write) * (1 * write / 2)) &&
+          0 <
+          ptrDeref(ptrAdd(extent(ptrDeref(ptrAdd(optGet1(dim1), i)).halidedimensiont),
+          0)).int)))
+  requires block_length(pointer_block(optGet1(ptrDeref(ptrAdd(host(ptrDeref(ptrAdd(optGet1(outBuffer),
+    0)).halidebufferint32t), 0)).opt_pointer))) -
+    pointer_offset(optGet1(ptrDeref(ptrAdd(host(ptrDeref(ptrAdd(optGet1(outBuffer),
+    0)).halidebufferint32t), 0)).opt_pointer)) ==
+    ptrDeref(ptrAdd(extent(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer),
+    0)).halidebufferint32t), 0)).opt_pointer), 1)).halidedimensiont), 0)).int *
+    ptrDeref(ptrAdd(stride(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer),
+    0)).halidebufferint32t), 0)).opt_pointer), 1)).halidedimensiont), 0)).int
+  requires ptrDeref(ptrAdd(min2(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer),
+    0)).halidebufferint32t), 0)).opt_pointer), 0)).halidedimensiont), 0)).int ==
+    minx
+  requires ptrDeref(ptrAdd(extent(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer),
+    0)).halidebufferint32t), 0)).opt_pointer), 0)).halidedimensiont), 0)).int ==
+    nx
+  requires ptrDeref(ptrAdd(stride(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer),
+    0)).halidebufferint32t), 0)).opt_pointer), 0)).halidedimensiont), 0)).int ==
+    1
+  requires ptrDeref(ptrAdd(min2(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer),
+    0)).halidebufferint32t), 0)).opt_pointer), 1)).halidedimensiont), 0)).int ==
+    miny
+  requires ptrDeref(ptrAdd(extent(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer),
+    0)).halidebufferint32t), 0)).opt_pointer), 1)).halidedimensiont), 0)).int ==
+    ny
+  requires ptrDeref(ptrAdd(stride(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer),
+    0)).halidebufferint32t), 0)).opt_pointer), 1)).halidedimensiont), 0)).int ==
+    nx
+  requires (forall _0_1: Int ::
+      { ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(host(ptrDeref(ptrAdd(optGet1(outBuffer),
+      0)).halidebufferint32t), 0)).opt_pointer), _0_1)) }
+      0 <= _0_1 - (-1 + 1) * (nx * miny) &&
+      _0_1 - (-1 + 1) * (nx * miny) < nx * ny ==>
+      acc(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(host(ptrDeref(ptrAdd(optGet1(outBuffer),
+      0)).halidebufferint32t), 0)).opt_pointer), _0_1)).int, 1 * write))
+  ensures 0 < nx
+  ensures (let p ==
+      (1 * write / 2) in
+      (let nDims ==
+        (2) in
+        outBuffer != (none1(): Option[Pointer]) &&
+        block_length(pointer_block(optGet1(outBuffer))) -
+        pointer_offset(optGet1(outBuffer)) ==
+        1 &&
+        acc(ptrDeref(ptrAdd(optGet1(outBuffer), 0)).halidebufferint32t, scale(write) *
+        p) &&
+        acc(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer), 0)).halidebufferint32t),
+        0)).opt_pointer, scale(write) * p) &&
+        ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer), 0)).halidebufferint32t),
+        0)).opt_pointer !=
+        (none1(): Option[Pointer]) &&
+        block_length(pointer_block(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer),
+        0)).halidebufferint32t), 0)).opt_pointer))) -
+        pointer_offset(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer),
+        0)).halidebufferint32t), 0)).opt_pointer)) ==
+        nDims &&
+        acc(ptrDeref(ptrAdd(host(ptrDeref(ptrAdd(optGet1(outBuffer), 0)).halidebufferint32t),
+        0)).opt_pointer, scale(write) * p) &&
+        ptrDeref(ptrAdd(host(ptrDeref(ptrAdd(optGet1(outBuffer), 0)).halidebufferint32t),
+        0)).opt_pointer !=
+        (none1(): Option[Pointer])))
+  ensures (let dim1 ==
+      (ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer), 0)).halidebufferint32t),
+      0)).opt_pointer) in
+      (let p ==
+        (1 * write / 2) in
+        (let i ==
+          (0) in
+          acc(ptrDeref(ptrAdd(optGet1(dim1), i)).halidedimensiont, scale(write) *
+          (1 * write / 2)) &&
+          acc(ptrDeref(ptrAdd(min2(ptrDeref(ptrAdd(optGet1(dim1), i)).halidedimensiont),
+          0)).int, scale(write) * (1 * write / 2)) &&
+          acc(ptrDeref(ptrAdd(stride(ptrDeref(ptrAdd(optGet1(dim1), i)).halidedimensiont),
+          0)).int, scale(write) * (1 * write / 2)) &&
+          acc(ptrDeref(ptrAdd(extent(ptrDeref(ptrAdd(optGet1(dim1), i)).halidedimensiont),
+          0)).int, scale(write) * (1 * write / 2)) &&
+          0 <
+          ptrDeref(ptrAdd(extent(ptrDeref(ptrAdd(optGet1(dim1), i)).halidedimensiont),
+          0)).int)))
+  ensures (let dim1 ==
+      (ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer), 0)).halidebufferint32t),
+      0)).opt_pointer) in
+      (let p ==
+        (1 * write / 2) in
+        (let i ==
+          (1) in
+          acc(ptrDeref(ptrAdd(optGet1(dim1), i)).halidedimensiont, scale(write) *
+          (1 * write / 2)) &&
+          acc(ptrDeref(ptrAdd(min2(ptrDeref(ptrAdd(optGet1(dim1), i)).halidedimensiont),
+          0)).int, scale(write) * (1 * write / 2)) &&
+          acc(ptrDeref(ptrAdd(stride(ptrDeref(ptrAdd(optGet1(dim1), i)).halidedimensiont),
+          0)).int, scale(write) * (1 * write / 2)) &&
+          acc(ptrDeref(ptrAdd(extent(ptrDeref(ptrAdd(optGet1(dim1), i)).halidedimensiont),
+          0)).int, scale(write) * (1 * write / 2)) &&
+          0 <
+          ptrDeref(ptrAdd(extent(ptrDeref(ptrAdd(optGet1(dim1), i)).halidedimensiont),
+          0)).int)))
+  ensures block_length(pointer_block(optGet1(ptrDeref(ptrAdd(host(ptrDeref(ptrAdd(optGet1(outBuffer),
+    0)).halidebufferint32t), 0)).opt_pointer))) -
+    pointer_offset(optGet1(ptrDeref(ptrAdd(host(ptrDeref(ptrAdd(optGet1(outBuffer),
+    0)).halidebufferint32t), 0)).opt_pointer)) ==
+    ptrDeref(ptrAdd(extent(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer),
+    0)).halidebufferint32t), 0)).opt_pointer), 1)).halidedimensiont), 0)).int *
+    ptrDeref(ptrAdd(stride(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer),
+    0)).halidebufferint32t), 0)).opt_pointer), 1)).halidedimensiont), 0)).int
+  ensures ptrDeref(ptrAdd(min2(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer),
+    0)).halidebufferint32t), 0)).opt_pointer), 0)).halidedimensiont), 0)).int ==
+    minx
+  ensures ptrDeref(ptrAdd(extent(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer),
+    0)).halidebufferint32t), 0)).opt_pointer), 0)).halidedimensiont), 0)).int ==
+    nx
+  ensures ptrDeref(ptrAdd(stride(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer),
+    0)).halidebufferint32t), 0)).opt_pointer), 0)).halidedimensiont), 0)).int ==
+    1
+  ensures ptrDeref(ptrAdd(min2(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer),
+    0)).halidebufferint32t), 0)).opt_pointer), 1)).halidedimensiont), 0)).int ==
+    miny
+  ensures ptrDeref(ptrAdd(extent(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer),
+    0)).halidebufferint32t), 0)).opt_pointer), 1)).halidedimensiont), 0)).int ==
+    ny
+  ensures ptrDeref(ptrAdd(stride(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(outBuffer),
+    0)).halidebufferint32t), 0)).opt_pointer), 1)).halidedimensiont), 0)).int ==
+    nx
+  ensures (forall _0_1: Int ::
+      { ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(host(ptrDeref(ptrAdd(optGet1(outBuffer),
+      0)).halidebufferint32t), 0)).opt_pointer), _0_1)) }
+      0 <= _0_1 - (-1 + 1) * (nx * miny) &&
+      _0_1 - (-1 + 1) * (nx * miny) < nx * ny ==>
+      acc(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(host(ptrDeref(ptrAdd(optGet1(outBuffer),
+      0)).halidebufferint32t), 0)).opt_pointer), _0_1)).int, 1 * write))
+{
+  {
+    var exc: Ref
+    var return: Int
+    var out: Option[Pointer]
+    var outMin0: Int
+    var outExtent0: Int
+    var outStride0: Int
+    var outMin1: Int
+    var outExtent1: Int
+    var outStride1: Int
+    var t1: Int
+    var outS0Y: Int
+    var t2: Int
+    var outS0X: Int
+    var buf: Option[Pointer]
+    var unknown3: Option[Pointer]
+    var buf1: Option[Pointer]
+    var d: Int
+    var unknown4: Int
+    var buf2: Option[Pointer]
+    var d1: Int
+    var unknown5: Int
+    var buf3: Option[Pointer]
+    var d2: Int
+    var unknown6: Int
+    var buf4: Option[Pointer]
+    var d3: Int
+    var unknown7: Int
+    var buf5: Option[Pointer]
+    var d4: Int
+    var unknown8: Int
+    var buf6: Option[Pointer]
+    var d5: Int
+    var unknown9: Int
+    var tid1: Int
+    var e: Bool
+    var unknown10: Void
+    var tid2: Int
+    var e1: Bool
+    var unknown11: Void
+    var tid3: Int
+    var e2: Bool
+    var unknown12: Void
+    var tid4: Int
+    var e3: Bool
+    var unknown13: Void
+    var tid5: Int
+    var e4: Bool
+    var unknown14: Void
+    var tid6: Int
+    var e5: Bool
+    var unknown15: Void
+    var flatten: Option[Pointer]
+    var flatten1: Option[Pointer]
+    var flatten2: Int
+    var flatten3: Int
+    var flatten4: Int
+    var flatten5: Int
+    var flatten6: Int
+    var flatten7: Int
+    var flatten8: Int
+    var flatten9: Int
+    var flatten10: Int
+    var flatten11: Int
+    var flatten12: Int
+    var flatten13: Int
+    var flatten14: Int
+    var flatten15: Int
+    var flatten16: Int
+    var flatten17: Int
+    var flatten18: Int
+    var flatten19: Int
+    var flatten20: Bool
+    var flatten21: Bool
+    var flatten22: Bool
+    var flatten23: Bool
+    var flatten24: Bool
+    var flatten25: Bool
+    var flatten26: Int
+    var flatten27: Int
+    var flatten28: Int
+    var flatten29: Int
+    var flatten30: Int
+    var flatten31: Int
+    var flatten32: Int
+    var excbeforeloop: Ref
+    var excbeforeloop1: Ref
+    var evaluationdummy: Bool
+    exc := null
+    buf := outBuffer
+    flatten := ptrDeref(ptrAdd(host(ptrDeref(ptrAdd(optGet1(buf), 0)).halidebufferint32t),
+      0)).opt_pointer
+    unknown3 := flatten
+    goto UNKNOWN
+    label UNKNOWN
+    flatten1 := unknown3
+    out := flatten1
+    buf1 := outBuffer
+    flatten2 := 0
+    d := flatten2
+    flatten3 := ptrDeref(ptrAdd(min2(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(buf1),
+      0)).halidebufferint32t), 0)).opt_pointer), d)).halidedimensiont), 0)).int
+    unknown4 := flatten3
+    goto UNKNOWN1
+    label UNKNOWN1
+    flatten4 := unknown4
+    outMin0 := flatten4
+    buf2 := outBuffer
+    flatten5 := 0
+    d1 := flatten5
+    flatten6 := ptrDeref(ptrAdd(extent(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(buf2),
+      0)).halidebufferint32t), 0)).opt_pointer), d1)).halidedimensiont), 0)).int
+    unknown5 := flatten6
+    goto UNKNOWN2
+    label UNKNOWN2
+    flatten7 := unknown5
+    outExtent0 := flatten7
+    buf3 := outBuffer
+    flatten8 := 0
+    d2 := flatten8
+    flatten9 := ptrDeref(ptrAdd(stride(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(buf3),
+      0)).halidebufferint32t), 0)).opt_pointer), d2)).halidedimensiont), 0)).int
+    unknown6 := flatten9
+    goto UNKNOWN3
+    label UNKNOWN3
+    flatten10 := unknown6
+    outStride0 := flatten10
+    buf4 := outBuffer
+    flatten11 := 1
+    d3 := flatten11
+    flatten12 := ptrDeref(ptrAdd(min2(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(buf4),
+      0)).halidebufferint32t), 0)).opt_pointer), d3)).halidedimensiont), 0)).int
+    unknown7 := flatten12
+    goto UNKNOWN4
+    label UNKNOWN4
+    flatten13 := unknown7
+    outMin1 := flatten13
+    buf5 := outBuffer
+    flatten14 := 1
+    d4 := flatten14
+    flatten15 := ptrDeref(ptrAdd(extent(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(buf5),
+      0)).halidebufferint32t), 0)).opt_pointer), d4)).halidedimensiont), 0)).int
+    unknown8 := flatten15
+    goto UNKNOWN5
+    label UNKNOWN5
+    flatten16 := unknown8
+    outExtent1 := flatten16
+    buf6 := outBuffer
+    flatten17 := 1
+    d5 := flatten17
+    flatten18 := ptrDeref(ptrAdd(stride(ptrDeref(ptrAdd(optGet1(ptrDeref(ptrAdd(dim(ptrDeref(ptrAdd(optGet1(buf6),
+      0)).halidebufferint32t), 0)).opt_pointer), d5)).halidedimensiont), 0)).int
+    unknown9 := flatten18
+    goto UNKNOWN6
+    label UNKNOWN6
+    flatten19 := unknown9
+    outStride1 := flatten19
+    tid1 := tid
+    flatten20 := outStride0 == 1
+    e := flatten20
+    label UNKNOWN7
+    tid2 := tid
+    flatten21 := outMin0 == minx
+    e1 := flatten21
+    label UNKNOWN8
+    tid3 := tid
+    flatten22 := outExtent0 == nx
+    e2 := flatten22
+    label UNKNOWN9
+    tid4 := tid
+    flatten23 := outStride1 == nx
+    e3 := flatten23
+    label UNKNOWN10
+    tid5 := tid
+    flatten24 := outMin1 == miny
+    e4 := flatten24
+    label UNKNOWN11
+    tid6 := tid
+    flatten25 := outExtent1 == ny
+    e5 := flatten25
+    label UNKNOWN12
+    flatten26 := miny * nx + minx
+    t1 := flatten26
+    label LOOP
+    excbeforeloop := exc
+    outS0Y := miny
+    while (outS0Y < miny + ny)
+      invariant exc == excbeforeloop
+      invariant 0 < nx
+      invariant miny <= outS0Y
+      invariant outS0Y < miny + ny + 1
+      invariant (forall outs0xforall_outs0yforall: Int ::
+          { ptrDeref(ptrAdd(optGet1(out), outs0xforall_outs0yforall)) }
+          0 <=
+          outs0xforall_outs0yforall -
+          (-1 * minx - miny * nx + minx + nx * miny) &&
+          outs0xforall_outs0yforall -
+          (-1 * minx - miny * nx + minx + nx * miny) <
+          nx * ny ==>
+          acc(ptrDeref(ptrAdd(optGet1(out), outs0xforall_outs0yforall)).int, 1 *
+          write)) 
+    {
+      flatten28 := nx * outS0Y - t1
+      t2 := flatten28
+      label LOOP1
+      excbeforeloop1 := exc
+      outS0X := minx
+      while (outS0X < minx + nx)
+        invariant exc == excbeforeloop1
+        invariant 0 < nx
+        invariant minx <= outS0X
+        invariant outS0X < minx + nx + 1
+        invariant (forall outs0xforall: Int ::
+            { ptrDeref(ptrAdd(optGet1(out), outs0xforall)) }
+            0 <= outs0xforall - (nx * outS0Y - minx - miny * nx + minx) &&
+            outs0xforall - (nx * outS0Y - minx - miny * nx + minx) < nx &&
+            lemma2dAccess(outs0xforall -
+            (nx * outS0Y - minx - miny * nx + minx) +
+            minx, minx, 1, nx, outS0Y, miny, nx, ny) ==>
+            acc(ptrDeref(ptrAdd(optGet1(out), outs0xforall)).int, 1 * write)) 
+      {
+        assert outS0X + t2 == outS0X - minx + (outS0Y - miny) * nx
+        evaluationdummy := lemma2dAccess(outS0X, minx, 1, nx, outS0Y, miny,
+          nx, ny)
+        flatten30 := outS0X + t2
+        flatten31 := outS0X + outS0Y
+        ptrDeref(ptrAdd(optGet1(out), flatten30)).int := flatten31
+        flatten29 := outS0X
+        outS0X := outS0X + 1
+      }
+      flatten27 := outS0Y
+      outS0Y := outS0Y + 1
+    }
+    flatten32 := 0
+    return := flatten32
+    goto END
+    label END
+    res := return
+    label BUBBLE
+    assert exc == null
+  }
+}

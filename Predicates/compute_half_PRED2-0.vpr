@@ -1,0 +1,1007 @@
+domain WellFoundedOrder[T]  {
+  
+  function bounded(v: T): Bool 
+  
+  function decreasing(v1: T, v2: T): Bool 
+}
+
+domain IntOrder  {
+  
+  axiom {
+    (forall i: Int ::0 <= i == (bounded(i): Bool))
+  }
+  
+  axiom {
+    (forall i: Int ::(forall j: Int ::i < j == (decreasing(i, j): Bool)))
+  }
+}
+
+domain Void  {
+  
+  function unit(): Void 
+  
+  axiom {
+    (forall v: Void ::true ==> unit() == v)
+  }
+}
+
+domain $domain$unknown1  {
+  
+  function unknown1(unknown12: Perm): Bool interpretation "is_int"
+}
+
+domain $domain$to_int  {
+  
+  function to_int(to_int1: Perm): Int interpretation "to_int"
+}
+
+domain $domain$unknown5  {
+  
+  function unknown5(unknown13: Perm, unknown14: Perm): Perm interpretation "^"
+}
+
+domain Block  {
+  
+  function block_length(b: Block): Int 
+  
+  function loc(b: Block, i: Int): Ref 
+  
+  function loc_inv_1(r: Ref): Block 
+  
+  function loc_inv_2(r: Ref): Int 
+  
+  axiom {
+    (forall b: Block ::block_length(b) >= 0)
+  }
+  
+  axiom {
+    (forall b: Block, i: Int ::
+      { loc(b, i) }
+      loc_inv_1(loc(b, i)) == b && loc_inv_2(loc(b, i)) == i)
+  }
+}
+
+domain Pointer  {
+  
+  function pointer_of(b: Block, offset: Int): Pointer 
+  
+  function pointer_block(p: Pointer): Block 
+  
+  function pointer_offset(p: Pointer): Int 
+  
+  axiom {
+    (forall p: Pointer ::pointer_offset(p) >= 0 &&
+      pointer_offset(p) < block_length(pointer_block(p)))
+  }
+  
+  axiom {
+    (forall b: Block, offset: Int ::
+      { pointer_block(pointer_of(b, offset)), pointer_offset(pointer_of(b, offset)) }
+      pointer_block(pointer_of(b, offset)) == b &&
+      pointer_offset(pointer_of(b, offset)) == offset)
+  }
+}
+
+domain Any  {
+  
+  
+}
+
+domain Option[T1]  {
+  
+  function none1(): Option[T1] 
+  
+  function some(x: T1): Option[T1] 
+  
+  function option_get(opt: Option[T1]): T1 
+  
+  axiom {
+    (forall x: T1 ::
+      { (some(x): Option[T1]) }
+      (none1(): Option[T1]) != (some(x): Option[T1]))
+  }
+  
+  axiom {
+    (forall x: T1 ::
+      { (some(x): Option[T1]) }
+      (option_get((some(x): Option[T1])): T1) == x)
+  }
+  
+  axiom {
+    (forall opt: Option[T1] ::
+      { (some((option_get(opt): T1)): Option[T1]) }
+      (some((option_get(opt): T1)): Option[T1]) == opt)
+  }
+}
+
+domain Nothing  {
+  
+  
+}
+
+field min: Int
+
+field dim: Option[Pointer]
+
+field host: Option[Pointer]
+
+field stride: Int
+
+field ref: Ref
+
+field dimensions: Int
+
+field extent: Int
+
+field int: Int
+
+function unknown2(x: Perm): Perm
+  decreases 
+  ensures result == (unknown1(x) ? x : (to_int(x) + 1) * write / 1)
+
+
+function unknown3(x: Perm): Perm
+  decreases 
+  ensures result == (0 * write / 1 <= x ? x : -x * write)
+
+
+function unknown4(x: Perm): Perm
+  decreases 
+  ensures result == to_int(x) * write / 1
+
+
+function unknown6(x: Perm, y: Perm): Perm
+  decreases 
+  ensures result == unknown5(x, y)
+
+
+function unknown7(x: Perm): Perm
+  decreases 
+  ensures result == unknown5(x, 5 * write / 10)
+
+
+function unknown8(x: Perm): Perm
+  decreases 
+  ensures !(x < 0 * write / 1 && unknown1(x - 5 * write / 10)) ==>
+    result == to_int(x + 5 * write / 10) * write / 1
+  ensures x < 0 * write / 1 && unknown1(x - 5 * write / 10) ==>
+    result == x - 5 * write / 10
+
+
+function ptrDeref(p: Pointer): Ref
+  decreases 
+{
+  loc(pointer_block(p), pointer_offset(p))
+}
+
+function ptrAdd(p: Pointer, offset: Int): Pointer
+  requires 0 <= pointer_offset(p) + offset
+  requires pointer_offset(p) + offset < block_length(pointer_block(p))
+  decreases 
+{
+  pointer_of(pointer_block(p), pointer_offset(p) + offset)
+}
+
+function anyAs(t: Any): Any
+  decreases 
+
+
+function asAny(t: Any): Any
+  decreases 
+  ensures anyAs(result) == t
+
+
+function optGet(opt: Option[Any]): Any
+  requires opt != (none1(): Option[Any])
+  decreases 
+  ensures (some(result): Option[Any]) == opt
+{
+  (option_get(opt): Any)
+}
+
+function optOrElse(opt: Option[Any], alt: Any): Any
+  decreases 
+  ensures opt == (none1(): Option[Any]) ==> result == alt
+  ensures opt != (none1(): Option[Any]) ==> result == optGet(opt)
+{
+  (opt == (none1(): Option[Any]) ? alt : optGet(opt))
+}
+
+function max(x: Int, y: Int): Int
+{
+  (y < x ? x : y)
+}
+
+function min1(x: Int, y: Int): Int
+{
+  (y < x ? y : x)
+}
+
+function max1(x: Perm, y: Perm): Perm
+{
+  (y < x ? x : y)
+}
+
+function min2(x: Perm, y: Perm): Perm
+{
+  (y < x ? y : x)
+}
+
+function abs(x: Int): Int
+{
+  (0 <= x ? x : -x)
+}
+
+function abs1(x: Perm): Perm
+{
+  (0 * write / 1 <= x ? x : -x * write)
+}
+
+function hdiv(x: Int, y: Int): Int
+{
+  (y == 0 ? 0 : x / y)
+}
+
+function hmod(x: Int, y: Int): Int
+{
+  (y == 0 ? 0 : x % y)
+}
+
+function truncdiv(a: Int, b: Int): Int
+  requires b != 0
+  decreases 
+{
+  (let i ==
+    (a / b) in
+    (let i1 ==
+      (a % b) in
+      (0 <= a || i1 == 0 ? i : i + (0 < b ? 1 : -1))))
+}
+
+function truncmod(a: Int, b: Int): Int
+  requires b != 0
+  decreases 
+{
+  (let i ==
+    (a % b) in
+    (0 <= a || i == 0 ? i : i - (0 < b ? b : -b)))
+}
+
+function lemmaNonlinear(a: Int, b: Int, maxA: Int): Bool
+  requires 0 <= a
+  requires 0 < b
+  requires a < maxA
+  decreases b
+  ensures a * b <= (maxA - 1) * b
+  ensures result
+{
+  (1 < b ? lemmaNonlinear(a, b - 1, maxA) : true)
+}
+
+function lemma2dAccess(a: Int, minA: Int, strideA: Int, extentA: Int, b: Int,
+  minB: Int, strideB: Int, extentB: Int): Bool
+  requires minA <= a
+  requires a - minA < extentA
+  requires minB <= b
+  requires b - minB < extentB
+  requires 0 < strideA
+  requires extentA * strideA <= strideB
+  decreases 
+  ensures 0 <= (b - minB) * strideB
+  ensures 0 <= (a - minA) * strideA + (b - minB) * strideB
+  ensures (a - minA) * strideA + (b - minB) * strideB < strideB * extentB
+  ensures result
+{
+  lemmaNonlinear(a - minA, strideA, extentA) &&
+  lemmaNonlinear(b - minB, strideB, extentB)
+}
+
+function lemma3dAccess(a: Int, minA: Int, strideA: Int, extentA: Int, b: Int,
+  minB: Int, strideB: Int, extentB: Int, c: Int, minC: Int, strideC: Int, extentC: Int): Bool
+  requires minA <= a
+  requires a - minA < extentA
+  requires minB <= b
+  requires b - minB < extentB
+  requires minC <= c
+  requires c - minC < extentC
+  requires 0 < strideA
+  requires extentA * strideA <= strideB
+  requires extentB * strideB <= strideC
+  decreases 
+  ensures 0 <=
+    (a - minA) * strideA + (b - minB) * strideB + (c - minC) * strideC
+  ensures (a - minA) * strideA + (b - minB) * strideB +
+    (c - minC) * strideC <
+    strideC * extentC
+  ensures result
+{
+  lemma2dAccess(a, minA, strideA, extentA, b, minB, strideB, extentB) &&
+  lemmaNonlinear(c - minC, strideC, extentC)
+}
+
+function lemma4dAccess(a: Int, minA: Int, strideA: Int, extentA: Int, b: Int,
+  minB: Int, strideB: Int, extentB: Int, c: Int, minC: Int, strideC: Int, extentC: Int,
+  d: Int, minD: Int, strideD: Int, extentD: Int): Bool
+  requires minA <= a
+  requires a - minA < extentA
+  requires minB <= b
+  requires b - minB < extentB
+  requires minC <= c
+  requires c - minC < extentC
+  requires minD <= d
+  requires d - minD < extentD
+  requires 0 < strideA
+  requires extentA * strideA <= strideB
+  requires extentB * strideB <= strideC
+  requires extentC * strideC <= strideD
+  decreases 
+  ensures 0 <=
+    (a - minA) * strideA + (b - minB) * strideB + (c - minC) * strideC +
+    (d - minD) * strideD
+  ensures (a - minA) * strideA + (b - minB) * strideB +
+    (c - minC) * strideC +
+    (d - minD) * strideD <
+    strideD * extentD
+  ensures result
+
+
+function lemma5dAccess(a: Int, minA: Int, strideA: Int, extentA: Int, b: Int,
+  minB: Int, strideB: Int, extentB: Int, c: Int, minC: Int, strideC: Int, extentC: Int,
+  d: Int, minD: Int, strideD: Int, extentD: Int, e: Int, minE: Int, strideE: Int,
+  extentE: Int): Bool
+  requires minA <= a
+  requires a - minA < extentA
+  requires minB <= b
+  requires b - minB < extentB
+  requires minC <= c
+  requires c - minC < extentC
+  requires minD <= d
+  requires d - minD < extentD
+  requires minE <= e
+  requires e - minE < extentE
+  requires 0 < strideA
+  requires extentA * strideA <= strideB
+  requires extentB * strideB <= strideC
+  requires extentC * strideC <= strideD
+  requires extentD * strideD <= strideE
+  decreases 
+  ensures 0 <=
+    (a - minA) * strideA + (b - minB) * strideB + (c - minC) * strideC +
+    (d - minD) * strideD +
+    (e - minE) * strideE
+  ensures (a - minA) * strideA + (b - minB) * strideB +
+    (c - minC) * strideC +
+    (d - minD) * strideD +
+    (e - minE) * strideE <
+    strideE * extentE
+  ensures result
+
+
+function nothingAs(value: Nothing): Any
+  decreases 
+
+
+function nothingAs1(value: Nothing): Pointer
+  decreases 
+
+
+function optGet1(opt: Option[Nothing]): Nothing
+  requires opt != (none1(): Option[Nothing])
+  decreases 
+  ensures (some(result): Option[Nothing]) == opt
+{
+  (option_get(opt): Nothing)
+}
+
+function optGet2(opt: Option[Pointer]): Pointer
+  requires opt != (none1(): Option[Pointer])
+  decreases 
+  ensures (some(result): Option[Pointer]) == opt
+{
+  (option_get(opt): Pointer)
+}
+
+function pureOut(x: Int): Int
+
+
+function scale(amount: Perm): Perm
+  requires amount >= 0 * write
+  decreases 
+  ensures result >= 0 * write
+{
+  amount
+}
+
+function type(type1: Ref): Int
+  decreases 
+  ensures result >= 0
+  ensures result <= 2
+  ensures type1 == null ==> result == 0
+  ensures type1 != null ==> result != 0
+
+
+function subtype(subtype1: Int, subtype2: Int): Bool
+  requires subtype1 >= 0
+  requires subtype1 <= 2
+  requires subtype2 >= 0
+  requires subtype2 <= 2
+  decreases 
+{
+  (subtype1 == 0 ==> true) &&
+  ((subtype1 == 1 ==> subtype2 == 1) && (subtype1 == 2 ==> subtype2 == 2))
+}
+
+predicate fPartPred(data0: Option[Pointer], x: Int, xMin: Int, xExtent: Int,
+  y: Int, yMin: Int, yExtent: Int) {
+  xMin <= x && x < xMin + xExtent && yMin <= y && y < yMin + yExtent &&
+  data0 !=
+  ((none1(): Option[Nothing]) == (none1(): Option[Nothing]) ?
+    (none1(): Option[Pointer]) :
+    (some(nothingAs1(optGet1((none1(): Option[Nothing])))): Option[Pointer])) &&
+  block_length(pointer_block(optGet2(data0))) -
+  pointer_offset(optGet2(data0)) ==
+  xExtent * yExtent &&
+  lemma2dAccess(x, xMin, 1, xExtent, y, yMin, xExtent, yExtent) &&
+  (let idx ==
+    (x - xMin + (y - yMin) * xExtent) in
+    acc(ptrDeref(optGet2((some(ptrAdd(optGet2(data0), idx)): Option[Pointer]))).int, write))
+}
+
+predicate fPred(f: Option[Pointer]) {
+  f !=
+  ((none1(): Option[Nothing]) == (none1(): Option[Nothing]) ?
+    (none1(): Option[Pointer]) :
+    (some(nothingAs1(optGet1((none1(): Option[Nothing])))): Option[Pointer])) &&
+  (forall i: Int ::
+    { ptrDeref(ptrAdd(optGet2(f), i)).int }
+    0 <= i &&
+    i <
+    block_length(pointer_block(optGet2(f))) - pointer_offset(optGet2(f)) ==>
+    acc(ptrDeref(optGet2((some(ptrAdd(optGet2(f), i)): Option[Pointer]))).int, write))
+}
+
+predicate outPartPred(data0: Option[Pointer], x: Int, xMin: Int, xExtent: Int,
+  y: Int, yMin: Int, yExtent: Int) {
+  xMin <= x && x < xMin + xExtent && yMin <= y && y < yMin + yExtent &&
+  data0 !=
+  ((none1(): Option[Nothing]) == (none1(): Option[Nothing]) ?
+    (none1(): Option[Pointer]) :
+    (some(nothingAs1(optGet1((none1(): Option[Nothing])))): Option[Pointer])) &&
+  block_length(pointer_block(optGet2(data0))) -
+  pointer_offset(optGet2(data0)) ==
+  xExtent * yExtent &&
+  lemma2dAccess(x, xMin, 1, xExtent, y, yMin, xExtent, yExtent) &&
+  (let idx ==
+    (x - xMin + (y - yMin) * xExtent) in
+    acc(ptrDeref(optGet2((some(ptrAdd(optGet2(data0), idx)): Option[Pointer]))).int, write))
+}
+
+method unknown(tid: Int, expression: Bool) returns (res: Void)
+  requires expression
+
+
+method unknown9(tid: Int, format: Option[Pointer]) returns (res: Int)
+
+
+method unknown10(tid: Int, size: Int) returns (res: Option[Pointer])
+
+
+method unknown11(tid: Int, ptr: Option[Pointer]) returns (res: Void)
+
+
+method make_pointer_array_int(tid: Int, size: Int)
+  returns (res: Option[Pointer])
+  requires 0 <= size
+  ensures res !=
+    ((none1(): Option[Nothing]) == (none1(): Option[Nothing]) ?
+      (none1(): Option[Pointer]) :
+      (some(nothingAs1(optGet1((none1(): Option[Nothing])))): Option[Pointer]))
+  ensures block_length(pointer_block(optGet2(res))) == size
+  ensures pointer_offset(optGet2(res)) == 0
+  ensures (forall i: Int ::
+      { ptrDeref(ptrAdd(optGet2(res), i)).int }
+      0 <= i && i < size ==>
+      acc(ptrDeref(optGet2((some(ptrAdd(optGet2(res), i)): Option[Pointer]))).int, write))
+
+
+method computeHalf(tid: Int, outBuffer: Option[Pointer]) returns (res: Int)
+  requires (let buf ==
+      (outBuffer) in
+      (let p ==
+        (1 * write / 2) in
+        (let nDims ==
+          (2) in
+          buf !=
+          ((none1(): Option[Nothing]) == (none1(): Option[Nothing]) ?
+            (none1(): Option[Pointer]) :
+            (some(nothingAs1(optGet1((none1(): Option[Nothing])))): Option[Pointer])) &&
+          block_length(pointer_block(optGet2(buf))) -
+          pointer_offset(optGet2(buf)) ==
+          1 &&
+          acc(ptrDeref(optGet2(buf)).ref, p) &&
+          acc(ptrDeref(ptrAdd(optGet2(buf), 0)).ref.dim, p) &&
+          ptrDeref(ptrAdd(optGet2(buf), 0)).ref.dim !=
+          ((none1(): Option[Nothing]) == (none1(): Option[Nothing]) ?
+            (none1(): Option[Pointer]) :
+            (some(nothingAs1(optGet1((none1(): Option[Nothing])))): Option[Pointer])) &&
+          block_length(pointer_block(optGet2(ptrDeref(ptrAdd(optGet2(buf), 0)).ref.dim))) -
+          pointer_offset(optGet2(ptrDeref(ptrAdd(optGet2(buf), 0)).ref.dim)) ==
+          nDims &&
+          acc(ptrDeref(ptrAdd(optGet2(buf), 0)).ref.host, p) &&
+          ptrDeref(ptrAdd(optGet2(buf), 0)).ref.host !=
+          ((none1(): Option[Nothing]) == (none1(): Option[Nothing]) ?
+            (none1(): Option[Pointer]) :
+            (some(nothingAs1(optGet1((none1(): Option[Nothing])))): Option[Pointer])))))
+  requires (let dim1 ==
+      (ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.dim) in
+      (let p ==
+        (1 * write / 2) in
+        (let i ==
+          (0) in
+          acc(ptrDeref(optGet2((some(ptrAdd(optGet2(dim1), i)): Option[Pointer]))).ref, 1 *
+          write /
+          2) &&
+          acc(ptrDeref(ptrAdd(optGet2(dim1), i)).ref.min, 1 * write / 2) &&
+          acc(ptrDeref(ptrAdd(optGet2(dim1), i)).ref.stride, 1 * write / 2) &&
+          acc(ptrDeref(ptrAdd(optGet2(dim1), i)).ref.extent, 1 * write / 2))))
+  requires (let dim1 ==
+      (ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.dim) in
+      (let p ==
+        (1 * write / 2) in
+        (let i ==
+          (1) in
+          acc(ptrDeref(optGet2((some(ptrAdd(optGet2(dim1), i)): Option[Pointer]))).ref, 1 *
+          write /
+          2) &&
+          acc(ptrDeref(ptrAdd(optGet2(dim1), i)).ref.min, 1 * write / 2) &&
+          acc(ptrDeref(ptrAdd(optGet2(dim1), i)).ref.stride, 1 * write / 2) &&
+          acc(ptrDeref(ptrAdd(optGet2(dim1), i)).ref.extent, 1 * write / 2))))
+  requires block_length(pointer_block(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer),
+    0)).ref.host))) -
+    pointer_offset(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.host)) ==
+    ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.dim),
+    1)).ref.extent *
+    ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.dim),
+    1)).ref.stride
+  requires ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.dim),
+    0)).ref.min ==
+    0
+  requires ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.dim),
+    0)).ref.extent ==
+    100
+  requires ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.dim),
+    0)).ref.stride ==
+    1
+  requires ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.dim),
+    1)).ref.min ==
+    0
+  requires ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.dim),
+    1)).ref.extent ==
+    42
+  requires ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.dim),
+    1)).ref.stride ==
+    100
+  requires (forall _0_1: Int ::
+      { ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.host),
+      _0_1)).int }
+      0 <= _0_1 && _0_1 < 100 * 42 ==>
+      acc(ptrDeref(optGet2((some(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer),
+      0)).ref.host), _0_1)): Option[Pointer]))).int, 1 * write))
+  ensures (let buf ==
+      (outBuffer) in
+      (let p ==
+        (1 * write / 2) in
+        (let nDims ==
+          (2) in
+          buf !=
+          ((none1(): Option[Nothing]) == (none1(): Option[Nothing]) ?
+            (none1(): Option[Pointer]) :
+            (some(nothingAs1(optGet1((none1(): Option[Nothing])))): Option[Pointer])) &&
+          block_length(pointer_block(optGet2(buf))) -
+          pointer_offset(optGet2(buf)) ==
+          1 &&
+          acc(ptrDeref(optGet2(buf)).ref, p) &&
+          acc(ptrDeref(ptrAdd(optGet2(buf), 0)).ref.dim, p) &&
+          ptrDeref(ptrAdd(optGet2(buf), 0)).ref.dim !=
+          ((none1(): Option[Nothing]) == (none1(): Option[Nothing]) ?
+            (none1(): Option[Pointer]) :
+            (some(nothingAs1(optGet1((none1(): Option[Nothing])))): Option[Pointer])) &&
+          block_length(pointer_block(optGet2(ptrDeref(ptrAdd(optGet2(buf), 0)).ref.dim))) -
+          pointer_offset(optGet2(ptrDeref(ptrAdd(optGet2(buf), 0)).ref.dim)) ==
+          nDims &&
+          acc(ptrDeref(ptrAdd(optGet2(buf), 0)).ref.host, p) &&
+          ptrDeref(ptrAdd(optGet2(buf), 0)).ref.host !=
+          ((none1(): Option[Nothing]) == (none1(): Option[Nothing]) ?
+            (none1(): Option[Pointer]) :
+            (some(nothingAs1(optGet1((none1(): Option[Nothing])))): Option[Pointer])))))
+  ensures (let dim1 ==
+      (ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.dim) in
+      (let p ==
+        (1 * write / 2) in
+        (let i ==
+          (0) in
+          acc(ptrDeref(optGet2((some(ptrAdd(optGet2(dim1), i)): Option[Pointer]))).ref, 1 *
+          write /
+          2) &&
+          acc(ptrDeref(ptrAdd(optGet2(dim1), i)).ref.min, 1 * write / 2) &&
+          acc(ptrDeref(ptrAdd(optGet2(dim1), i)).ref.stride, 1 * write / 2) &&
+          acc(ptrDeref(ptrAdd(optGet2(dim1), i)).ref.extent, 1 * write / 2))))
+  ensures (let dim1 ==
+      (ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.dim) in
+      (let p ==
+        (1 * write / 2) in
+        (let i ==
+          (1) in
+          acc(ptrDeref(optGet2((some(ptrAdd(optGet2(dim1), i)): Option[Pointer]))).ref, 1 *
+          write /
+          2) &&
+          acc(ptrDeref(ptrAdd(optGet2(dim1), i)).ref.min, 1 * write / 2) &&
+          acc(ptrDeref(ptrAdd(optGet2(dim1), i)).ref.stride, 1 * write / 2) &&
+          acc(ptrDeref(ptrAdd(optGet2(dim1), i)).ref.extent, 1 * write / 2))))
+  ensures block_length(pointer_block(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer),
+    0)).ref.host))) -
+    pointer_offset(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.host)) ==
+    ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.dim),
+    1)).ref.extent *
+    ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.dim),
+    1)).ref.stride
+  ensures ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.dim),
+    0)).ref.min ==
+    0
+  ensures ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.dim),
+    0)).ref.extent ==
+    100
+  ensures ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.dim),
+    0)).ref.stride ==
+    1
+  ensures ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.dim),
+    1)).ref.min ==
+    0
+  ensures ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.dim),
+    1)).ref.extent ==
+    42
+  ensures ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.dim),
+    1)).ref.stride ==
+    100
+  ensures (forall _0_1: Int ::
+      { ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.host),
+      _0_1)).int }
+      0 <= _0_1 && _0_1 < 100 * 42 ==>
+      acc(ptrDeref(optGet2((some(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer),
+      0)).ref.host), _0_1)): Option[Pointer]))).int, 1 * write))
+  ensures (forall _0_1: Int ::
+      { ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.host),
+      _0_1)).int }
+      0 <= _0_1 && _0_1 < 100 * 42 ==>
+      ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.host),
+      _0_1)).int ==
+      _0_1 % 100 + _0_1 / 100 + 1)
+  ensures (forall _0_1: Int ::
+      { ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.host),
+      _0_1)).int }
+      0 <= _0_1 && _0_1 < 100 * 42 ==>
+      0 <
+      ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(outBuffer), 0)).ref.host),
+      _0_1)).int)
+{
+  {
+    var exc: Ref
+    var return: Int
+    var out: Option[Pointer]
+    var outMin0: Int
+    var outExtent0: Int
+    var outStride0: Int
+    var outMin1: Int
+    var outExtent1: Int
+    var outStride1: Int
+    var outS0Y: Int
+    var f: Option[Pointer]
+    var fS0X: Int
+    var t5: Int
+    var outS0X: Int
+    var _3: Int
+    var buf: Option[Pointer]
+    var unknown15: Option[Pointer]
+    var buf1: Option[Pointer]
+    var d: Int
+    var unknown16: Int
+    var buf2: Option[Pointer]
+    var d1: Int
+    var unknown17: Int
+    var buf3: Option[Pointer]
+    var d2: Int
+    var unknown18: Int
+    var buf4: Option[Pointer]
+    var d3: Int
+    var unknown19: Int
+    var buf5: Option[Pointer]
+    var d4: Int
+    var unknown20: Int
+    var buf6: Option[Pointer]
+    var d5: Int
+    var unknown21: Int
+    var tid1: Int
+    var e: Bool
+    var unknown22: Void
+    var tid2: Int
+    var e1: Bool
+    var unknown23: Void
+    var tid3: Int
+    var e2: Bool
+    var unknown24: Void
+    var tid4: Int
+    var e3: Bool
+    var unknown25: Void
+    var tid5: Int
+    var e4: Bool
+    var unknown26: Void
+    var tid6: Int
+    var e5: Bool
+    var unknown27: Void
+    var flatten: Option[Pointer]
+    var flatten1: Option[Pointer]
+    var flatten2: Int
+    var flatten3: Int
+    var flatten4: Int
+    var flatten5: Int
+    var flatten6: Int
+    var flatten7: Int
+    var flatten8: Int
+    var flatten9: Int
+    var flatten10: Int
+    var flatten11: Int
+    var flatten12: Int
+    var flatten13: Int
+    var flatten14: Int
+    var flatten15: Int
+    var flatten16: Int
+    var flatten17: Int
+    var flatten18: Int
+    var flatten19: Int
+    var flatten20: Bool
+    var flatten21: Bool
+    var flatten22: Bool
+    var flatten23: Bool
+    var flatten24: Bool
+    var flatten25: Bool
+    var flatten26: Int
+    var flatten27: Int
+    var res1: Option[Pointer]
+    var flatten28: Option[Pointer]
+    var flatten29: Int
+    var flatten30: Int
+    var flatten31: Int
+    var flatten32: Int
+    var flatten33: Int
+    var flatten34: Int
+    var flatten35: Int
+    var flatten36: Int
+    var flatten37: Int
+    var flatten38: Int
+    var excbeforeloop: Ref
+    var excbeforeloop1: Ref
+    var excbeforeloop2: Ref
+    exc := null
+    buf := outBuffer
+    flatten := ptrDeref(ptrAdd(optGet2(buf), 0)).ref.host
+    unknown15 := flatten
+    goto UNKNOWN
+    label UNKNOWN
+    flatten1 := unknown15
+    out := flatten1
+    buf1 := outBuffer
+    flatten2 := 0
+    d := flatten2
+    flatten3 := ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(buf1), 0)).ref.dim),
+      d)).ref.min
+    unknown16 := flatten3
+    goto UNKNOWN1
+    label UNKNOWN1
+    flatten4 := unknown16
+    outMin0 := flatten4
+    buf2 := outBuffer
+    flatten5 := 0
+    d1 := flatten5
+    flatten6 := ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(buf2), 0)).ref.dim),
+      d1)).ref.extent
+    unknown17 := flatten6
+    goto UNKNOWN2
+    label UNKNOWN2
+    flatten7 := unknown17
+    outExtent0 := flatten7
+    buf3 := outBuffer
+    flatten8 := 0
+    d2 := flatten8
+    flatten9 := ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(buf3), 0)).ref.dim),
+      d2)).ref.stride
+    unknown18 := flatten9
+    goto UNKNOWN3
+    label UNKNOWN3
+    flatten10 := unknown18
+    outStride0 := flatten10
+    buf4 := outBuffer
+    flatten11 := 1
+    d3 := flatten11
+    flatten12 := ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(buf4), 0)).ref.dim),
+      d3)).ref.min
+    unknown19 := flatten12
+    goto UNKNOWN4
+    label UNKNOWN4
+    flatten13 := unknown19
+    outMin1 := flatten13
+    buf5 := outBuffer
+    flatten14 := 1
+    d4 := flatten14
+    flatten15 := ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(buf5), 0)).ref.dim),
+      d4)).ref.extent
+    unknown20 := flatten15
+    goto UNKNOWN5
+    label UNKNOWN5
+    flatten16 := unknown20
+    outExtent1 := flatten16
+    buf6 := outBuffer
+    flatten17 := 1
+    d5 := flatten17
+    flatten18 := ptrDeref(ptrAdd(optGet2(ptrDeref(ptrAdd(optGet2(buf6), 0)).ref.dim),
+      d5)).ref.stride
+    unknown21 := flatten18
+    goto UNKNOWN6
+    label UNKNOWN6
+    flatten19 := unknown21
+    outStride1 := flatten19
+    tid1 := tid
+    flatten20 := outStride0 == 1
+    e := flatten20
+    label UNKNOWN7
+    tid2 := tid
+    flatten21 := outMin0 == 0
+    e1 := flatten21
+    label UNKNOWN8
+    tid3 := tid
+    flatten22 := outExtent0 == 100
+    e2 := flatten22
+    label UNKNOWN9
+    tid4 := tid
+    flatten23 := outStride1 == 100
+    e3 := flatten23
+    label UNKNOWN10
+    tid5 := tid
+    flatten24 := outMin1 == 0
+    e4 := flatten24
+    label UNKNOWN11
+    tid6 := tid
+    flatten25 := outExtent1 == 42
+    e5 := flatten25
+    label UNKNOWN12
+    label LOOP
+    excbeforeloop := exc
+    flatten26 := 0
+    outS0Y := flatten26
+    while (outS0Y < 42)
+      invariant exc == excbeforeloop
+      invariant 0 <= outS0Y
+      invariant outS0Y < 42 + 1
+      invariant (forall outs0xforall_outs0yforall: Int ::
+          { ptrDeref(ptrAdd(optGet2(out), outs0xforall_outs0yforall)).int }
+          0 <= outs0xforall_outs0yforall &&
+          outs0xforall_outs0yforall < 100 * 42 ==>
+          acc(ptrDeref(optGet2((some(ptrAdd(optGet2(out), outs0xforall_outs0yforall)): Option[Pointer]))).int, 1 *
+          write))
+      invariant (forall outs0xforall_outs0yforall: Int ::
+          { ptrDeref(ptrAdd(optGet2(out), outs0xforall_outs0yforall)).int }
+          0 <= outs0xforall_outs0yforall &&
+          outs0xforall_outs0yforall < 100 * outS0Y ==>
+          ptrDeref(ptrAdd(optGet2(out), outs0xforall_outs0yforall)).int ==
+          outs0xforall_outs0yforall % 100 + outs0xforall_outs0yforall / 100 +
+          1)
+      invariant (forall outs0xforall_outs0yforall: Int ::
+          { ptrDeref(ptrAdd(optGet2(out), outs0xforall_outs0yforall)).int }
+          0 <= outs0xforall_outs0yforall &&
+          outs0xforall_outs0yforall < 100 * outS0Y ==>
+          0 < ptrDeref(ptrAdd(optGet2(out), outs0xforall_outs0yforall)).int) 
+    {
+      res1 := make_pointer_array_int(tid, 100)
+      flatten28 := res1
+      f := flatten28
+      exhale (forall fs0xforall: Int ::
+          { ptrDeref(ptrAdd(optGet2(f), fs0xforall)).int }
+          0 <= fs0xforall && fs0xforall < 100 ==>
+          acc(ptrDeref(optGet2((some(ptrAdd(optGet2(f), fs0xforall)): Option[Pointer]))).int, 1 *
+          write))
+      inhale (forall fS0XForall: Int ::
+          { fPartPred(f, fS0XForall, 0, 100, outS0Y, outS0Y, 1) }
+          0 <= fS0XForall && fS0XForall < 100 ==>
+          acc(fPartPred(f, fS0XForall, 0, 100, outS0Y, outS0Y, 1), write))
+      label LOOP1
+      excbeforeloop1 := exc
+      flatten29 := 0
+      fS0X := flatten29
+      while (fS0X < 100)
+        invariant exc == excbeforeloop1
+        invariant 0 <= fS0X
+        invariant fS0X < 100 + 1
+        invariant (forall fS0XForall: Int ::
+            { fPartPred(f, fS0XForall, 0, 100, outS0Y, outS0Y, 1) }
+            0 <= fS0XForall && fS0XForall < 100 ==>
+            acc(fPartPred(f, fS0XForall, 0, 100, outS0Y, outS0Y, 1), write))
+        invariant (forall fs0xforall: Int ::
+            { ptrDeref(ptrAdd(optGet2(f), fs0xforall)).int }
+            0 <= fs0xforall && fs0xforall < fS0X ==>
+            (unfolding acc(fPartPred(f, fs0xforall, 0, 100, outS0Y, outS0Y,
+              1), 1/2) in
+              ptrDeref(ptrAdd(optGet2(f), fs0xforall)).int ==
+              fs0xforall + outS0Y)) 
+      {
+        // assert fS0X>0 ==> (unfolding acc(fPartPred(f, 0, 0, 100, outS0Y, outS0Y,
+        //       1), 1/2) in
+        //       ptrDeref(ptrAdd(optGet2(f), 0)).int ==
+        //       0 + outS0Y)
+        // assert (forall fs0xforall: Int ::
+        //     { ptrDeref(ptrAdd(optGet2(f), fs0xforall)).int }
+        //     0 <= fs0xforall && fs0xforall < fS0X ==>
+        //     (unfolding acc(fPartPred(f, fs0xforall, 0, 100, outS0Y, outS0Y,
+        //       1), 1/2) in
+        //       ptrDeref(ptrAdd(optGet2(f), fs0xforall)).int ==
+        //       fs0xforall + outS0Y))
+        unfold acc(fPartPred(f, fS0X, 0, 100, outS0Y, outS0Y, 1), write)
+        flatten31 := fS0X + outS0Y
+        ptrDeref(ptrAdd(optGet2(f), fS0X)).int := flatten31
+        fold acc(fPartPred(f, fS0X, 0, 100, outS0Y, outS0Y, 1), write)
+        assert (unfolding acc(fPartPred(f, fS0X, 0, 100, outS0Y, outS0Y, 1), write) in
+            ptrDeref(ptrAdd(optGet2(f), fS0X)).int == fS0X + outS0Y)
+        inhale false
+        flatten30 := fS0X
+        fS0X := fS0X + 1
+      }
+      inhale false
+      flatten32 := outS0Y * 100
+      t5 := flatten32
+      label LOOP2
+      excbeforeloop2 := exc
+      flatten33 := 0
+      outS0X := flatten33
+      while (outS0X < 100)
+        invariant exc == excbeforeloop2
+        invariant 0 <= outS0X
+        invariant outS0X < 100 + 1
+        invariant acc(fPred(f), scale(1 * write / 2) * write)
+        invariant (forall outs0xforall: Int ::
+            { ptrDeref(ptrAdd(optGet2(out), outs0xforall)).int }
+            0 <= outs0xforall - outS0Y * 100 &&
+            outs0xforall - outS0Y * 100 < 100 ==>
+            acc(ptrDeref(optGet2((some(ptrAdd(optGet2(out), outs0xforall)): Option[Pointer]))).int, 1 *
+            write))
+        invariant (forall outs0xforall: Int ::
+            { ptrDeref(ptrAdd(optGet2(out), outs0xforall)).int }
+            0 <= outs0xforall - outS0Y * 100 &&
+            outs0xforall - outS0Y * 100 < outS0X ==>
+            ptrDeref(ptrAdd(optGet2(out), outs0xforall)).int ==
+            outs0xforall - outS0Y * 100 + outS0Y + 1)
+        invariant (forall outs0xforall: Int ::
+            { ptrDeref(ptrAdd(optGet2(out), outs0xforall)).int }
+            0 <= outs0xforall - outS0Y * 100 &&
+            outs0xforall - outS0Y * 100 < outS0X ==>
+            0 < ptrDeref(ptrAdd(optGet2(out), outs0xforall)).int) 
+      {
+        unfold acc(fPred(f), scale(1 * write / 2) * write)
+        flatten35 := ptrDeref(ptrAdd(optGet2(f), outS0X)).int
+        _3 := flatten35
+        fold acc(fPred(f), scale(1 * write / 2) * write)
+        flatten36 := outS0X + t5
+        flatten37 := _3 + 1
+        ptrDeref(ptrAdd(optGet2(out), flatten36)).int := flatten37
+        flatten34 := outS0X
+        outS0X := outS0X + 1
+      }
+      flatten27 := outS0Y
+      outS0Y := outS0Y + 1
+    }
+    flatten38 := 0
+    return := flatten38
+    goto END
+    label END
+    res := return
+    label BUBBLE
+    assert exc == null
+  }
+}

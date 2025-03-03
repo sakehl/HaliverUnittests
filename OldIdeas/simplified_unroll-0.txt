@@ -1,0 +1,284 @@
+domain WellFoundedOrder[T]  {
+  
+  function bounded(v: T): Bool 
+  
+  function decreasing(v1: T, v2: T): Bool 
+}
+
+domain IntOrder  {
+  
+  axiom {
+    (forall i: Int ::0 <= i == (bounded(i): Bool))
+  }
+  
+  axiom {
+    (forall i: Int ::(forall j: Int ::i < j == (decreasing(i, j): Bool)))
+  }
+}
+
+domain array  {
+  
+  function array_loc(a: array, i: Int): Ref 
+  
+  function alen(a: array): Int 
+  
+  function loc_inv_1(loc: Ref): array 
+  
+  function loc_inv_2(loc: Ref): Int 
+  
+  axiom {
+    (forall a: array, i: Int ::
+      { array_loc(a, i) }
+      loc_inv_1(array_loc(a, i)) == a && loc_inv_2(array_loc(a, i)) == i)
+  }
+  
+  axiom {
+    (forall a: array :: { alen(a) } alen(a) >= 0)
+  }
+}
+
+domain any  {
+  
+  
+}
+
+domain option[T1]  {
+  
+  function None(): option[T1] 
+  
+  function some(x: T1): option[T1] 
+  
+  function option_get(opt: option[T1]): T1 
+  
+  axiom {
+    (forall x: T1 ::
+      { (some(x): option[T1]) }
+      (None(): option[T1]) != (some(x): option[T1]))
+  }
+  
+  axiom {
+    (forall x: T1 ::
+      { (some(x): option[T1]) }
+      (option_get((some(x): option[T1])): T1) == x)
+  }
+  
+  axiom {
+    (forall opt: option[T1] ::
+      { (some((option_get(opt): T1)): option[T1]) }
+      (some((option_get(opt): T1)): option[T1]) == opt)
+  }
+}
+
+domain void  {
+  
+  function unit(): void 
+  
+  axiom {
+    (forall v: void ::true ==> unit() == v)
+  }
+}
+
+field int: Int
+
+function aloc(a: array, i: Int): Ref
+  requires 0 <= i
+  requires i < alen(a)
+  decreases 
+  ensures loc_inv_1(result) == a
+  ensures loc_inv_2(result) == i
+{
+  array_loc(a, i)
+}
+
+function any_as(t: any): any
+  decreases 
+
+
+function as_any(t: any): any
+  decreases 
+  ensures any_as(result) == t
+
+
+function opt_get(opt: option[any]): any
+  requires opt != (None(): option[any])
+  decreases 
+  ensures (some(result): option[any]) == opt
+{
+  (option_get(opt): any)
+}
+
+function opt_or_else(opt: option[any], alt: any): any
+  decreases 
+  ensures opt == (None(): option[any]) ==> result == alt
+  ensures opt != (None(): option[any]) ==> result == opt_get(opt)
+{
+  (opt == (None(): option[any]) ? alt : opt_get(opt))
+}
+
+function opt_get1(opt: option[array]): array
+  requires opt != (None(): option[array])
+  decreases 
+  ensures (some(result): option[array]) == opt
+{
+  (option_get(opt): array)
+}
+
+function type(type1: Ref): Int
+  decreases 
+  ensures result >= 0
+  ensures result <= 0
+  ensures type1 == null ==> result == 0
+  ensures type1 != null ==> result != 0
+
+
+function subtype(subtype1: Int, subtype2: Int): Bool
+  requires subtype1 >= 0
+  requires subtype1 <= 0
+  requires subtype2 >= 0
+  requires subtype2 <= 0
+  decreases 
+{
+  (subtype1 == 0 ==> true) && true
+}
+
+method check_sat_unrollouter(inp: option[array], out: option[array])
+  requires inp != (None(): option[array])
+  requires alen(opt_get1(inp)) == 300
+  requires out != (None(): option[array])
+  requires alen(opt_get1(out)) == 300
+  requires (forall i: Int ::
+      { aloc(opt_get1(inp), i) }
+      0 <= i && i < 300 ==> acc(aloc(opt_get1(inp), i).int, wildcard))
+  requires (forall i: Int ::
+      { aloc(opt_get1(out), i) }
+      0 <= i && i < 300 ==> acc(aloc(opt_get1(out), i).int, 1 * write))
+{
+  assert false
+}
+
+method unrollouter(tid: Int, inp: option[array], out: option[array])
+  returns (res: void)
+  requires inp != (None(): option[array])
+  requires alen(opt_get1(inp)) == 300
+  requires out != (None(): option[array])
+  requires alen(opt_get1(out)) == 300
+  requires (forall i: Int ::
+      { aloc(opt_get1(inp), i) }
+      0 <= i && i < 300 ==> acc(aloc(opt_get1(inp), i).int, wildcard))
+  requires (forall i: Int ::
+      { aloc(opt_get1(out), i) }
+      0 <= i && i < 300 ==> acc(aloc(opt_get1(out), i).int, 1 * write))
+  ensures inp != (None(): option[array])
+  ensures alen(opt_get1(inp)) == 300
+  ensures out != (None(): option[array])
+  ensures alen(opt_get1(out)) == 300
+  ensures (forall i: Int ::
+      { aloc(opt_get1(inp), i) }
+      0 <= i && i < 300 ==> acc(aloc(opt_get1(inp), i).int, wildcard))
+  ensures (forall i: Int ::
+      { aloc(opt_get1(out), i) }
+      0 <= i && i < 300 ==> acc(aloc(opt_get1(out), i).int, 1 * write))
+{
+  var exc: Ref
+  var return: void
+  var x: Int
+  var x1: Int
+  var x2: Int
+  var flatten: Int
+  var flatten1: Int
+  var flatten2: Int
+  var flatten3: Int
+  var flatten4: Int
+  var flatten5: Int
+  var flatten6: Int
+  var flatten7: Int
+  var flatten8: Int
+  var flatten9: Int
+  var flatten10: Int
+  var excBeforeLoop: Ref
+  var excBeforeLoop1: Ref
+  var excBeforeLoop2: Ref
+  exc := null
+  label loop
+  excBeforeLoop := exc
+  flatten := 0
+  x := flatten
+  while (x < 100)
+    invariant exc == excBeforeLoop
+    invariant 0 <= x
+    invariant x < 100 + 1
+    invariant (forall i: Int ::
+        { aloc(opt_get1(inp), i) }
+        0 <= i && i < 300 ==> acc(aloc(opt_get1(inp), i).int, wildcard))
+    invariant (forall i: Int ::
+        { aloc(opt_get1(out), i) }
+        0 <= i && i < 100 ==> acc(aloc(opt_get1(out), i).int, 1 * write)) 
+  {
+    flatten2 := aloc(opt_get1(inp), x * 3).int + 1
+    aloc(opt_get1(out), x).int := flatten2
+    flatten1 := x
+    x := x + 1
+  }
+  label loop1
+  excBeforeLoop1 := exc
+  flatten3 := 0
+  x1 := flatten3
+  while (x1 < 100)
+    invariant exc == excBeforeLoop1
+    invariant 0 <= x1
+    invariant x1 < 100 + 1
+    invariant (forall i: Int ::
+        { aloc(opt_get1(inp), i) }
+        0 <= i && i < 300 ==> acc(aloc(opt_get1(inp), i).int, wildcard))
+    invariant (forall i: Int ::
+        { aloc(opt_get1(out), i) }
+        100 <= i && i < 200 ==>
+        acc(aloc(opt_get1(out), i).int, 1 * write)) 
+  {
+    flatten5 := x1 + 100
+    flatten6 := aloc(opt_get1(inp), x1 * 3 + 1).int + 1
+    aloc(opt_get1(out), flatten5).int := flatten6
+    flatten4 := x1
+    x1 := x1 + 1
+  }
+  label loop2
+  excBeforeLoop2 := exc
+  flatten7 := 0
+  x2 := flatten7
+  while (x2 < 100)
+    invariant exc == excBeforeLoop2
+    invariant 0 <= x2
+    invariant x2 < 100 + 1
+    invariant (forall i: Int ::
+        { aloc(opt_get1(inp), i) }
+        0 <= i && i < 300 ==> acc(aloc(opt_get1(inp), i).int, wildcard))
+    invariant (forall i: Int ::
+        { aloc(opt_get1(out), i) }
+        0 <= i && i < 300 ==>
+        acc(aloc(opt_get1(out), i).int, 1 * write)) 
+  {
+    flatten9 := x2 + 200
+    flatten10 := aloc(opt_get1(inp), x2 * 3 + 2).int + 1
+    aloc(opt_get1(out), flatten9).int := flatten10
+    flatten8 := x2
+    x2 := x2 + 1
+  }
+  label end
+  res := return
+  label bubble
+  assert exc == null
+}
+
+method check_sat_type()
+{
+  assert false
+}
+
+method check_sat_subtype(subtype1: Int, subtype2: Int)
+  requires subtype1 >= 0
+  requires subtype1 <= 0
+  requires subtype2 >= 0
+  requires subtype2 <= 0
+{
+  assert false
+}

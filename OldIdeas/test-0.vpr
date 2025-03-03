@@ -1,0 +1,101 @@
+domain WellFoundedOrder[T]  {
+  
+  function bounded(v: T): Bool 
+  
+  function decreasing(v1: T, v2: T): Bool 
+}
+
+domain IntOrder  {
+  
+  axiom {
+    (forall i: Int ::0 <= i == (bounded(i): Bool))
+  }
+  
+  axiom {
+    (forall i: Int ::(forall j: Int ::i < j == (decreasing(i, j): Bool)))
+  }
+}
+
+function type(type1: Ref): Int
+  decreases 
+  ensures result >= 0
+  ensures result <= 0
+  ensures type1 == null ==> result == 0
+  ensures type1 != null ==> result != 0
+
+
+function subtype(subtype1: Int, subtype2: Int): Bool
+  requires subtype1 >= 0
+  requires subtype1 <= 0
+  requires subtype2 >= 0
+  requires subtype2 <= 0
+  decreases 
+{
+  (subtype1 == 0 ==> true) && true
+}
+
+method check_sat_f(extent: Int, y: Int, factor: Int, min: Int)
+  requires min <= y
+  requires min == 0
+  requires y < min + extent
+  requires 0 < extent
+  requires 0 < factor
+  requires extent < 100
+  requires factor < 1000
+{
+  assert false
+}
+
+method f(tid: Int, min: Int, extent: Int, factor: Int, y: Int)
+  returns (res: Int)
+  requires min <= y
+  requires min == 0
+  requires y < min + extent
+  requires 0 < extent
+  requires 0 < factor
+  requires extent < 100
+  requires factor < 1000
+  ensures min <= y
+  ensures min == 0
+  ensures y < min + extent
+  ensures 0 < extent
+  ensures 0 < factor
+  ensures extent < 100
+  ensures factor < 1000
+{
+  var exc: Ref
+  var return: Int
+  exc := null
+  assert y <= extent - 1
+  assert 0 < factor
+  assert y * factor <= (extent - 1) * factor
+  label end
+  res := return
+  label bubble
+  assert exc == null
+}
+
+method check_sat_lessThenFactor()
+{
+  assert false
+}
+
+method lessThenFactor(tid: Int, i: Int, j: Int, fac: Int)
+  returns (res: Bool)
+  ensures i <= j && 0 < fac ==> i * fac <= j * fac
+  ensures res == (i <= j && 0 < fac)
+
+
+method check_sat_type()
+{
+  assert false
+}
+
+method check_sat_subtype(subtype1: Int, subtype2: Int)
+  requires subtype1 >= 0
+  requires subtype1 <= 0
+  requires subtype2 >= 0
+  requires subtype2 <= 0
+{
+  assert false
+}

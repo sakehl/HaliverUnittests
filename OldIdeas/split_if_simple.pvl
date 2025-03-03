@@ -1,0 +1,34 @@
+context inp != null && inp.length == 100*42;
+context out != null && out.length == 100*42;
+context (\forall* int i=0..4200; true ; Perm(inp[i], read));
+context (\forall* int i=0..4200; true ; Perm(out[i], 1\1));
+void split_if(int[] inp, int[] out) {
+ // produce out
+  loop_invariant 0 <= y && y <= 0 + 42;
+  loop_invariant (\forall* int i=0..4200; true ; Perm(inp[i], read));
+  loop_invariant (\forall* int i=0..4200; true ; Perm(out[i], 1\1));
+ for (int y = 0; y < 0 + 42; y++)
+ {
+   loop_invariant 0 <= xo && xo <= 0 + 14;
+   loop_invariant (\forall* int i=0..4200; true ; Perm(inp[i], read));
+   loop_invariant (\forall* int i=y*100..y*100+98+0; true ; Perm(out[i], 1\1));
+  for (int xo = 0; xo < 0 + 14; xo++)
+  {
+    loop_invariant 0 <= xi && xi <= 0 + 7;
+    loop_invariant (\forall* int i=0..4200; true ; Perm(inp[i], read));
+    loop_invariant (\forall* int i; (0 <= i) && (i < 7); Perm(out[(xo*7) + ((y*100) + i)], 1\1));
+   for (int xi = 0; xi < 0 + 7; xi++)
+   {
+    out[xi + y*100 + xo*7] = (inp[((xi + xo*7)*42) + y] + 1);
+   } // for xi
+  } // for xo
+   loop_invariant 0 <= xi && xi <= 0 + 2;
+   loop_invariant (\forall* int i=0..4200; true ; Perm(inp[i], read));
+   loop_invariant Perm(out[y*100+0+98], 1\1);
+   loop_invariant Perm(out[y*100+1+98], 1\1);
+  for (int xi = 0; xi < 0 + 2; xi++)
+  {
+   out[y*100 + xi + 98] = (inp[xi*42 + y + 4116] + 1);
+  } // for xi
+ } // for y
+}
