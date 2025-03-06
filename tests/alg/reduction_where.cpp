@@ -16,10 +16,10 @@ int main(int argc, char *argv[]) {
   RDom r(0,42, "r");
   r.where(r < max_x(y));
   out(x, y) = x + y;
-  // out.ensures(out(x,y) == x+y);
+  out.ensures(out(x,y) == x+y);
   out(x,y) += f(r);
-  // out.invariant(out(x,y) == x+y+r);
-  // out.ensures(out(x,y) == x+y+42); 
+  out.invariant(out(x,y) == x + y + min(max(max_x(y), 0), r));
+  out.ensures(out(x,y) == x + y + min(max(max_x(y), 0), 42));
 
   int nx = 100, ny = 42;
   out.output_buffer().dim(0).set_bounds(0,nx);

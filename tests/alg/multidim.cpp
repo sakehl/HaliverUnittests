@@ -13,20 +13,23 @@ int main(int argc, char *argv[]) {
 
   f(x, y) = Tuple(input(0,0, x,y), input(1,1, x,y));
   out(i, j, x, y) = select(i == 0, j+f(x, y)[0], j+f(x, y)[1]);
-  out.bound(i, 0, 2).bound(j, 0, 2).bound(x, minx, nx).bound(y, miny, ny);
+  out.bound(i, 0, 2).bound(j, 0, 2);
   out.unroll(i).unroll(j);
+  input.compute_at(out, x);
 
   out.output_buffer().dim(0).set_bounds(0, 2);
   out.output_buffer().dim(1).set_bounds(0, 2);
-  out.output_buffer().dim(2).set_bounds(minx, nx);
-  out.output_buffer().dim(3).set_bounds(miny, ny);
+  out.output_buffer().dim(2).set_bounds(0, nx);
+  out.output_buffer().dim(3).set_bounds(0, ny);
 
   out.output_buffer().dim(1).set_stride(2);
   out.output_buffer().dim(2).set_stride(4);
   out.output_buffer().dim(3).set_stride(4*nx);
 
   
-  // out.ensures(out(x,y) == x + y);
+  // out.ensures(
+  //   implies(i==0, out(i,j,x,y) == x+y +j)
+  // );
 
   // int nx = 100, ny = 42;
   // out.output_buffer().dim(0).set_bounds(0,2);
@@ -43,8 +46,7 @@ int main(int argc, char *argv[]) {
     .with_feature(Target::NoBoundsQuery)
     ;
   
-  std::vector<Annotation> pipeline_anns;
-  pipeline_anns.emplace_back(context(nx>0 && ny>0));
+  std::vector<Annotation> pipeline_anns = {context_everywhere(nx > 0),  context_everywhere(ny > 0)};
 
   std::string name = argv[1];
   std::string mem_only_s = "";

@@ -27,15 +27,10 @@ function(build_unit_test)
 
   if(${UT_AND_FRONT})
     add_custom_command(
-      OUTPUT ${UT_TARGET}_front.pvl ${UT_TARGET}_mem.c
-      COMMAND ./${UT_TARGET} ${UT_TARGET} -mem_only
+      OUTPUT ${UT_TARGET}_front.pvl ${UT_TARGET}.c
+      COMMAND ./${UT_TARGET} ${UT_TARGET}
       DEPENDS ${UT_TARGET}
       VERBATIM
-    )
-
-    add_custom_target(
-      ${UT_TARGET}_pvl ALL
-      DEPENDS ${UT_TARGET}_front.pvl ${UT_TARGET}_mem.c
     )
 
     add_test(NAME ${UT_TARGET}_front.pvl
@@ -47,25 +42,47 @@ function(build_unit_test)
     )
   else()
     add_custom_command(
+      OUTPUT ${UT_TARGET}.c
+      COMMAND ./${UT_TARGET} ${UT_TARGET}
+      DEPENDS ${UT_TARGET}
+      VERBATIM
+    )
+  endif()
+
+  add_test(NAME ${UT_TARGET}.c
+    COMMAND ${VERCORS} --silicon-quiet ${UT_TARGET}.c
+  )
+  set_tests_properties(${UT_TARGET}.c PROPERTIES
+    WILL_FAIL ${UT_SHOULDFAIL}
+    LABELS ${UT_DIR}:back:${UT_LABELS}
+  )
+
+  if(NOT ${UT_SHOULDFAIL})
+    add_custom_command(
       OUTPUT ${UT_TARGET}_mem.c
       COMMAND ./${UT_TARGET} ${UT_TARGET} -mem_only
       DEPENDS ${UT_TARGET}
       VERBATIM
     )
 
+    add_test(NAME ${UT_TARGET}_mem.c
+      COMMAND ${VERCORS} --silicon-quiet ${UT_TARGET}_mem.c
+    )
+    set_tests_properties(${UT_TARGET}_mem.c
+      PROPERTIES
+      WILL_FAIL ${UT_SHOULDFAIL}
+      LABELS ${UT_DIR}:back:mem:${UT_LABELS}
+    )
+
     add_custom_target(
-      ${UT_TARGET}_pvl ALL
+      ${UT_TARGET}_all_mem ALL
       DEPENDS ${UT_TARGET}_mem.c
     )
   endif()
 
-   add_test(NAME ${UT_TARGET}_mem.c
-    COMMAND ${VERCORS} --silicon-quiet ${UT_TARGET}_mem.c
-  )
-  set_tests_properties(${UT_TARGET}_mem.c
-    PROPERTIES
-    WILL_FAIL ${UT_SHOULDFAIL}
-    LABELS ${UT_DIR}:back:${UT_LABELS}
+  add_custom_target(
+    ${UT_TARGET}_all ALL
+    DEPENDS ${UT_TARGET}.c
   )
 endfunction()
 
@@ -110,7 +127,7 @@ build_unit_test(TARGET fuse_par DIR fuse)
 build_unit_test(TARGET fuse_ser DIR fuse)
 
 # Compute_at
-build_unit_test(TARGET inline DIR compute_at)
+build_unit_test(TARGET compute_inline DIR compute_at)
 build_unit_test(TARGET compute_half DIR compute_at)
 build_unit_test(TARGET compute_root DIR compute_at)
 build_unit_test(TARGET compute_update DIR compute_at)

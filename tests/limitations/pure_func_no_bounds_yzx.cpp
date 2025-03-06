@@ -7,17 +7,17 @@ using namespace Halide;
 int main(int argc, char *argv[]) {
 
   Func f("f"), out("out");
-  Var x("x"), y("y");
-  Param<int> nx("nx"), ny("ny"), n("nz"), minx("minx"), miny("miny"), miny("minz");
+  Var x("x"), y("y"), z("z");
+  Param<int> nx("nx"), ny("ny"), nz("nz"), minx("minx"), miny("miny"), minz("minz");
 
   out(x, y, z) = x + y + z;
-  out.ensures(out(x,y) == x + y + z);
+  out.ensures(out(x,y,z) == x + y + z);
 
-  out.output_buffer().dim(0).set_bounds(minx, nx);
-  out.output_buffer().dim(1).set_bounds(miny, ny);
-  out.output_buffer().dim(2).set_bounds(minz, nz);
+  out.output_buffer().dim(0).set_bounds(0, nx);
+  out.output_buffer().dim(1).set_bounds(0, ny);
+  out.output_buffer().dim(2).set_bounds(0, nz);
   out.output_buffer().dim(1).set_stride(nx);
-  out.output_buffer().dim(1).set_stride(nx*ny);
+  out.output_buffer().dim(2).set_stride(nx*ny);
 
   Target target = Target();
   Target new_target = target

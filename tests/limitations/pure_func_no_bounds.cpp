@@ -13,8 +13,8 @@ int main(int argc, char *argv[]) {
   out(x, y) = x + y;
   out.ensures(out(x,y) == x + y);
 
-  out.output_buffer().dim(0).set_bounds(minx, nx);
-  out.output_buffer().dim(1).set_bounds(miny, ny);
+  out.output_buffer().dim(0).set_bounds(0, nx);
+  out.output_buffer().dim(1).set_bounds(0, ny);
   out.output_buffer().dim(1).set_stride(nx);
 
   Target target = Target();
