@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
   // We should investigate this
   Func f("f"), out("out"), input_temp("input_temp"), input("input");
   Var x("x"), y("y"), z("z");
-  Param<int> nx("nx"), ny("ny");
+  int nx = 100, ny = 42;
   input(x, y, z) = x+y+z;
   input.compute_root();
 
@@ -17,17 +17,11 @@ int main(int argc, char *argv[]) {
 
   out(x, y) = input_temp(x, y)[0] + input_temp(x, y)[1];
 
-  // input.dim(0).set_bounds(0, 2);
-  // input.dim(1).set_bounds(0, nx);
-  // input.dim(1).set_stride(2);
-  // input.dim(2).set_bounds(0, ny);
-  // input.dim(2).set_stride(nx*2);
-
   out.output_buffer().dim(0).set_bounds(0,nx);
   out.output_buffer().dim(1).set_bounds(0,ny);
   out.output_buffer().dim(1).set_stride(nx);
   Var xo("xo"), xi("xi");
-  out.split(x, xi, xo, 2, TailStrategy::GuardWithIf);
+  out.split(x, xo, xi, 2, TailStrategy::GuardWithIf);
   
   Target target = Target();
   Target new_target = target
@@ -46,5 +40,5 @@ int main(int argc, char *argv[]) {
   if(mem_only){
     name += "_mem";
   }
-  out.compile_to_c(name + ".c" , {nx, ny}, pipeline_anns, name, new_target, mem_only);
+  out.compile_to_c(name + ".c", {}, pipeline_anns, name, new_target, mem_only);
 }

@@ -21,7 +21,7 @@ function(build_unit_test)
   cmake_parse_arguments(UT "${options}" "${oneValueArgs}"
                           "${multiValueArgs}" ${ARGN} )
 
-  add_executable(${UT_TARGET} tests/${UT_DIR}/${UT_TARGET}.cpp)
+  add_executable(${UT_TARGET} tests/unit/${UT_DIR}/${UT_TARGET}.cpp)
 
   target_link_libraries(${UT_TARGET} PRIVATE Halide::Halide)
 
@@ -38,7 +38,7 @@ function(build_unit_test)
       )
     set_tests_properties(${UT_TARGET}_front.pvl PROPERTIES
       WILL_FAIL ${UT_SHOULDFAIL}
-      LABELS ${UT_DIR}:front:${UT_LABELS}
+      LABELS unit:${UT_DIR}:front:${UT_LABELS}
     )
   else()
     add_custom_command(
@@ -54,7 +54,7 @@ function(build_unit_test)
   )
   set_tests_properties(${UT_TARGET}.c PROPERTIES
     WILL_FAIL ${UT_SHOULDFAIL}
-    LABELS ${UT_DIR}:back:${UT_LABELS}
+    LABELS unit:${UT_DIR}:back:${UT_LABELS}
   )
 
   if(NOT ${UT_SHOULDFAIL})
@@ -71,7 +71,7 @@ function(build_unit_test)
     set_tests_properties(${UT_TARGET}_mem.c
       PROPERTIES
       WILL_FAIL ${UT_SHOULDFAIL}
-      LABELS ${UT_DIR}:back:mem:${UT_LABELS}
+      LABELS unit:${UT_DIR}:back:mem:${UT_LABELS}
     )
 
     add_custom_target(
@@ -86,7 +86,111 @@ function(build_unit_test)
   )
 endfunction()
 
-# Simple algorithms
+function(build_experiment_test)
+  set(options)
+  set(oneValueArgs TARGET DIR)
+  set(multiValueArgs LABELS)
+  cmake_parse_arguments(UT "${options}" "${oneValueArgs}"
+                          "${multiValueArgs}" ${ARGN} )
+
+  add_executable(${UT_TARGET} tests/${UT_DIR}/${UT_TARGET}.cpp)
+
+  target_link_libraries(${UT_TARGET} PRIVATE Halide::Halide)
+
+  add_custom_command(
+    OUTPUT ${UT_TARGET}_front.pvl
+    COMMAND ./${UT_TARGET} ${UT_TARGET}_front front
+    DEPENDS ${UT_TARGET}
+    VERBATIM
+  )
+
+  add_test(NAME ${UT_TARGET}_front.pvl
+    COMMAND ${VERCORS} --silicon-quiet ${UT_TARGET}_front.pvl
+  )
+  set_tests_properties(${UT_TARGET}_front.pvl PROPERTIES
+    LABELS experiment:${UT_DIR}:front:${UT_LABELS}
+  )
+
+  foreach(V RANGE 3)
+    add_custom_command(
+      OUTPUT ${UT_TARGET}_${V}.c
+      COMMAND ./${UT_TARGET} ${UT_TARGET}_${V} ${V}
+      DEPENDS ${UT_TARGET}
+      VERBATIM
+    )
+
+    add_test(NAME ${UT_TARGET}_${V}.c
+      COMMAND ${VERCORS} --silicon-quiet ${UT_TARGET}_${V}.c
+    )
+    set_tests_properties(${UT_TARGET}_${V}.c PROPERTIES
+      LABELS experiment:${UT_DIR}:back:${UT_LABELS}
+    )
+
+  endforeach()
+
+  foreach(V RANGE 3)
+    add_custom_command(
+      OUTPUT ${UT_TARGET}_${V}_mem.c
+      COMMAND ./${UT_TARGET} ${UT_TARGET}_${V}_mem ${V} mem
+      DEPENDS ${UT_TARGET}
+      VERBATIM
+    )
+
+    add_test(NAME ${UT_TARGET}_${V}_mem.c
+      COMMAND ${VERCORS} --silicon-quiet ${UT_TARGET}_${V}_mem.c
+    )
+    set_tests_properties(${UT_TARGET}_${V}_mem.c PROPERTIES
+      LABELS experiment:${UT_DIR}:back:${UT_LABELS}:mem
+    )
+
+  endforeach()
+
+
+  add_custom_target(
+    ${UT_TARGET}_pvl ALL
+    DEPENDS ${UT_TARGET}_front.pvl ${UT_TARGET}_0.c
+    ${UT_TARGET}_1.c ${UT_TARGET}_2.c ${UT_TARGET}_3.c
+  )
+
+  add_custom_target(
+    ${UT_TARGET}_pvl_mem ALL
+    DEPENDS ${UT_TARGET}_0_mem.c
+    ${UT_TARGET}_1_mem.c ${UT_TARGET}_2_mem.c ${UT_TARGET}_3_mem.c
+  )
+endfunction()
+
+function(build_single_experiment_test)
+  set(options)
+  set(oneValueArgs TARGET DIR)
+  set(multiValueArgs LABELS)
+  cmake_parse_arguments(UT "${options}" "${oneValueArgs}"
+                          "${multiValueArgs}" ${ARGN} )
+
+  add_executable(${UT_TARGET} tests/${UT_DIR}/${UT_TARGET}.cpp)
+
+  target_link_libraries(${UT_TARGET} PRIVATE Halide::Halide)
+
+  add_custom_command(
+    OUTPUT ${UT_TARGET}_mem.c
+    COMMAND ./${UT_TARGET} ${UT_TARGET}_mem
+    DEPENDS ${UT_TARGET}
+    VERBATIM
+  )
+
+  add_custom_target(
+    ${UT_TARGET}_pvl ALL
+    DEPENDS ${UT_TARGET}_mem.c
+  )
+
+  add_test(NAME ${UT_TARGET}_mem.c
+    COMMAND vct --backend-option --conditionalizePermissions --silicon-quiet ${UT_TARGET}_mem.c
+    )
+  set_tests_properties(${UT_TARGET}_mem.c PROPERTIES
+    LABELS ${UT_DIR}:back:${UT_LABELS}
+  )
+endfunction()
+
+# Unit tests: simple Halide programs
 build_unit_test(TARGET pure_func DIR alg AND_FRONT)
 build_unit_test(TARGET update DIR alg AND_FRONT)
 build_unit_test(TARGET update_full DIR alg AND_FRONT)
@@ -150,3 +254,15 @@ build_unit_test(TARGET reorder DIR reorder)
 build_unit_test(TARGET pure_func_no_bounds DIR limitations)
 build_unit_test(TARGET pure_func_no_bounds_xyz DIR limitations)
 build_unit_test(TARGET pure_func_no_bounds_yzx DIR limitations)
+
+# Experiments: involved Halide programs
+build_experiment_test(TARGET blur DIR experiment)
+build_experiment_test(TARGET hist DIR experiment)
+build_experiment_test(TARGET conv_layer DIR experiment)
+build_experiment_test(TARGET gemm DIR experiment)
+build_experiment_test(TARGET auto_viz DIR experiment)
+
+# build_single_experiment_test(TARGET bgu DIR bgu)
+build_single_experiment_test(TARGET bilateral_grid DIR experiment)
+build_single_experiment_test(TARGET camera_pipe DIR experiment)
+build_single_experiment_test(TARGET depthwise_separable_conv DIR experiment)
