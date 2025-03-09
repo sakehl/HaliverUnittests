@@ -11,7 +11,7 @@ set(CMAKE_PREFIX_PATH ../../halide/install)
 find_package(Halide REQUIRED)
 
 set(OUTFILE halide.out)
-set(VERCORS /home/lars/data/vercors/bin/vct)
+set(VERCORS /home/lars/data/vercors/bin/vct --silicon-quiet --no-infer-heap-context-into-frame --dev-total-timeout=600)
 
 
 function(build_unit_test)
@@ -34,7 +34,7 @@ function(build_unit_test)
     )
 
     add_test(NAME ${UT_TARGET}_front.pvl
-      COMMAND ${VERCORS} --silicon-quiet ${UT_TARGET}_front.pvl
+      COMMAND ${VERCORS} ${UT_TARGET}_front.pvl
       )
     set_tests_properties(${UT_TARGET}_front.pvl PROPERTIES
       WILL_FAIL ${UT_SHOULDFAIL}
@@ -50,7 +50,7 @@ function(build_unit_test)
   endif()
 
   add_test(NAME ${UT_TARGET}.c
-    COMMAND ${VERCORS} --silicon-quiet ${UT_TARGET}.c
+    COMMAND ${VERCORS} ${UT_TARGET}.c
   )
   set_tests_properties(${UT_TARGET}.c PROPERTIES
     WILL_FAIL ${UT_SHOULDFAIL}
@@ -66,7 +66,7 @@ function(build_unit_test)
     )
 
     add_test(NAME ${UT_TARGET}_mem.c
-      COMMAND ${VERCORS} --silicon-quiet ${UT_TARGET}_mem.c
+      COMMAND ${VERCORS} ${UT_TARGET}_mem.c
     )
     set_tests_properties(${UT_TARGET}_mem.c
       PROPERTIES
@@ -105,7 +105,7 @@ function(build_experiment_test)
   )
 
   add_test(NAME ${UT_TARGET}_front.pvl
-    COMMAND ${VERCORS} --silicon-quiet ${UT_TARGET}_front.pvl
+    COMMAND ${VERCORS} ${UT_TARGET}_front.pvl
   )
   set_tests_properties(${UT_TARGET}_front.pvl PROPERTIES
     LABELS experiment:${UT_DIR}:front:${UT_LABELS}
@@ -120,7 +120,7 @@ function(build_experiment_test)
     )
 
     add_test(NAME ${UT_TARGET}_${V}.c
-      COMMAND ${VERCORS} --silicon-quiet ${UT_TARGET}_${V}.c
+      COMMAND ${VERCORS} ${UT_TARGET}_${V}.c
     )
     set_tests_properties(${UT_TARGET}_${V}.c PROPERTIES
       LABELS experiment:${UT_DIR}:back:${UT_LABELS}
@@ -137,7 +137,7 @@ function(build_experiment_test)
     )
 
     add_test(NAME ${UT_TARGET}_${V}_mem.c
-      COMMAND ${VERCORS} --silicon-quiet ${UT_TARGET}_${V}_mem.c
+      COMMAND ${VERCORS} ${UT_TARGET}_${V}_mem.c
     )
     set_tests_properties(${UT_TARGET}_${V}_mem.c PROPERTIES
       LABELS experiment:${UT_DIR}:back:${UT_LABELS}:mem
@@ -183,8 +183,8 @@ function(build_single_experiment_test)
   )
 
   add_test(NAME ${UT_TARGET}_mem.c
-    COMMAND vct --backend-option --conditionalizePermissions --silicon-quiet ${UT_TARGET}_mem.c
-    )
+    COMMAND ${VERCORS} ${UT_TARGET}_mem.c
+  )
   set_tests_properties(${UT_TARGET}_mem.c PROPERTIES
     LABELS ${UT_DIR}:back:${UT_LABELS}
   )
@@ -236,6 +236,11 @@ build_unit_test(TARGET compute_half DIR compute_at)
 build_unit_test(TARGET compute_root DIR compute_at)
 build_unit_test(TARGET compute_update DIR compute_at)
 
+# Compute_with
+build_unit_test(TARGET compute_with_half DIR compute_with)
+build_unit_test(TARGET compute_with_inline DIR compute_with)
+build_unit_test(TARGET compute_with_reduction DIR compute_with)
+
 # Store_at
 build_unit_test(TARGET store_half DIR store_at)
 build_unit_test(TARGET store_root DIR store_at)
@@ -266,3 +271,40 @@ build_experiment_test(TARGET auto_viz DIR experiment)
 build_single_experiment_test(TARGET bilateral_grid DIR experiment)
 build_single_experiment_test(TARGET camera_pipe DIR experiment)
 build_single_experiment_test(TARGET depthwise_separable_conv DIR experiment)
+
+## Build padre files
+add_executable(GenerateHalideDiagonal tests/padre/GenerateHalideDiagonal.cc)
+add_executable(GenerateHalideFull tests/padre/GenerateHalideFull.cc)
+target_link_libraries(GenerateHalideDiagonal PRIVATE Halide::Halide)
+target_link_libraries(GenerateHalideFull PRIVATE Halide::Halide)
+
+add_custom_command(
+  OUTPUT SubDirectionHalide.c SolveDirectionHalide.c StepHalide.c
+  COMMAND ./GenerateHalideDiagonal
+  DEPENDS GenerateHalideDiagonal
+)
+
+add_custom_target(
+  GenerateHalideDiagonal_output ALL
+  DEPENDS SubDirectionHalide.c SolveDirectionHalide.c StepHalide.c
+)
+
+add_custom_command(
+  OUTPUT PerformIterationHalide.c
+  COMMAND ./GenerateHalideFull
+  DEPENDS GenerateHalideFull
+)
+
+add_custom_target(GenerateHalideFull_output ALL
+  DEPENDS PerformIterationHalide.c
+  GenerateHalideDiagonal_output
+)
+
+foreach(FILE SubDirectionHalide.c SolveDirectionHalide.c StepHalide.c PerformIterationHalide.c)
+  add_test(NAME ${FILE}
+    COMMAND ${VERCORS} ${FILE}
+  )
+  set_tests_properties(${FILE} PROPERTIES
+    LABELS padre:back
+  )
+endforeach()

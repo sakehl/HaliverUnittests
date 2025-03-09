@@ -39,8 +39,8 @@ int main(int argc, char *argv[]) {
     //                     y >= 0 && y < input.dim(2).extent());
     Expr in_bounds = (x >= 0 && x < W &&
                         y >= 0 && y < H);
-    Expr clamped_x = clamp(x, 0, W);
-    Expr clamped_y = clamp(y, 0, H);
+    Expr clamped_x = clamp(x, 0, W-1);
+    Expr clamped_y = clamp(y, 0, H-1);
     input_bounded(d, x, y, b) =
         select(in_bounds, input(d, clamped_x, clamped_y, b), 0.0f);
 
