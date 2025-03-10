@@ -10,20 +10,33 @@ int main(int argc, char *argv[]) {
   Var i("i"), si("si"), vis("vis");
 
   numerator(si) = 0;
-  denominator(si) = 0;
+  numerator.ensures(numerator(si) == 0);
+  denominator(si) = 1;
+  denominator.ensures(denominator(si) == 1);
   RDom rv(0, 10, "rv");
 
   denominator_inter(i, vis) = 0;
+  denominator_inter.ensures(denominator_inter(i, vis) == 0);
   denominator_inter(0, vis) = 1 + vis;
+  denominator_inter.ensures(implies(i==0, denominator_inter(i, vis) == 1+vis));
+  denominator_inter.ensures(implies(i!=0, denominator_inter(i, vis) == 0));
   denominator(rv) += denominator_inter(0, rv);
+  denominator.invariant(denominator(rv) ==  1+rv);
+  denominator.ensures(denominator(si) == 1+si);
 
   numerator(rv) += rv;
+  // numerator.invariant(forall("i", i<0 || i>=10, numerator(i) == 0));
+  // numerator.invariant(forall("i", rv <= i && i<10, numerator(i) == i));
+  // numerator.invariant(forall("i", 0<=i && i<rv, numerator(i) == i));
+  // numerator.ensures(implies(0<=si && si<10, numerator(si) == si));
+
   numerator.compute_root();
   denominator.compute_root();
   denominator.update().compute_with(numerator.update(), rv);
 
   Func out("out");
   out(si) = numerator(si) / denominator(si);
+  out.ensures(out(si) == (si / (1+si)));
 
   out.output_buffer().dim(0).set_bounds(0,10);
   
@@ -44,5 +57,6 @@ int main(int argc, char *argv[]) {
   if(mem_only){
     name += "_mem";
   }
+  out.translate_to_pvl(name +"_front.pvl", {}, pipeline_anns);
   out.compile_to_c(name + ".c" , {}, pipeline_anns, name, new_target, mem_only);
 }

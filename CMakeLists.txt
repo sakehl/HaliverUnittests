@@ -196,6 +196,7 @@ build_unit_test(TARGET update DIR alg AND_FRONT)
 build_unit_test(TARGET update_full DIR alg AND_FRONT)
 build_unit_test(TARGET update_full_fail DIR alg SHOULDFAIL AND_FRONT)
 build_unit_test(TARGET reduction DIR alg AND_FRONT)
+build_unit_test(TARGET reduction_in_arg DIR alg AND_FRONT)
 build_unit_test(TARGET reduction_multi DIR alg AND_FRONT)
 build_unit_test(TARGET reduction_multi_fail DIR alg SHOULDFAIL AND_FRONT)
 build_unit_test(TARGET input_buffer DIR alg AND_FRONT)
@@ -273,8 +274,8 @@ build_single_experiment_test(TARGET camera_pipe DIR experiment)
 build_single_experiment_test(TARGET depthwise_separable_conv DIR experiment)
 
 ## Build padre files
-add_executable(GenerateHalideDiagonal tests/padre/GenerateHalideDiagonal.cc)
-add_executable(GenerateHalideFull tests/padre/GenerateHalideFull.cc)
+add_executable(GenerateHalideDiagonal tests/padre/GenerateHalideDiagonal.cpp)
+add_executable(GenerateHalideFull tests/padre/GenerateHalideFull.cpp)
 target_link_libraries(GenerateHalideDiagonal PRIVATE Halide::Halide)
 target_link_libraries(GenerateHalideFull PRIVATE Halide::Halide)
 

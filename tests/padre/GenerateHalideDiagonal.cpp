@@ -2,6 +2,7 @@
 #include "HalideComplex.h"
 #include <math.h>
 #define HAVE_HALIVER
+#define CONCRETE_BOUNDS
 
 // using dp3::ddecal;
 using namespace Halide;
@@ -436,7 +437,7 @@ public:
 #ifdef CONCRETE_BOUNDS
             std::vector<Argument> step_args = {phase_only, step_size, sol_, next_sol_};
 #else
-            std::vector<Argument> step_args = {n_vis, n_solutions, n_antennas, phase_only, step_size, sol_, next_sol_};
+            std::vector<Argument> step_args = {n_vis, n_solutions, n_antennas, phase_only, step_size, sol_, next_sol_, n_dir_sol};
 #endif
             
             // Bounds on input
@@ -454,12 +455,12 @@ public:
 
             // idFunc.compile_to_c("IdHalide.c", args, {bounds}, "IdHalide", target);
             // testNumerator.compile_to_c("TestNumerator.c", args, {bounds}, "TestNumerator", target);
-            // v_sub_out_matrix.compile_to_c("SubDirectionHalide.c", args, {bounds}, "SubDirection", target);
+            v_sub_out_matrix.compile_to_c("SubDirectionHalide.c", args, {bounds}, "SubDirection", target);
             solve_out.compile_to_c("SolveDirectionHalide.c", args, {bounds}, "SolveDirection", target);
             
             Annotation step_bounds = context_everywhere(n_antennas>0 && n_vis>0 && n_solutions>0
                 && n_antennas == 50 && n_solutions == 8 && n_vis == 230930 && n_dir_sol ==3);
-            // step_out.compile_to_c("StepHalide.c", step_args, {step_bounds}, "StepHalide", target);
+            step_out.compile_to_c("StepHalide.c", step_args, {step_bounds}, "StepHalide", target);
 #else
             idFunc.compile_to_c("IdHalide.cc", args, "IdHalide", target);
             testNumerator.compile_to_c("TestNumerator.cc", args, "TestNumerator", target);
