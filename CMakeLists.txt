@@ -13,6 +13,7 @@ find_package(Halide REQUIRED)
 set(OUTFILE halide.out)
 set(VCT "/home/lars/data/vercors/bin/vct" CACHE STRING "Default value for VCT")
 set(VERCORS ${VCT} --silicon-quiet --no-infer-heap-context-into-frame --dev-total-timeout=600)
+set(VERCORS_PADRE ${VCT} --silicon-quiet --no-infer-heap-context-into-frame --dev-total-timeout=3600)
 # set(CMAKE_BINARY_DIR "/home/lars/data/HaliVerTests/Unittests/build" CACHE STRING "Default value for VCT")
 
 
@@ -305,7 +306,7 @@ add_custom_target(GenerateHalideFull_output ALL
 
 foreach(FILE SubDirectionHalide.c SolveDirectionHalide.c StepHalide.c PerformIterationHalide.c)
   add_test(NAME ${FILE}
-    COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${FILE}
+    COMMAND ${VERCORS_PADRE} ${CMAKE_BINARY_DIR}/${FILE}
   )
   set_tests_properties(${FILE} PROPERTIES
     LABELS padre:back

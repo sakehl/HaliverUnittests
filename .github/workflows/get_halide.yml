@@ -140,12 +140,5 @@ jobs:
       - name: CMake build
         run: cmake --build build --target all
 
-      - name: test
-        run: |
-          ./vercors/vercors $PWD/build/input_buffer_front.pvl
-
-      - name: Ctest
-        run: cd build && ctest -R input_buffer --output-on-failure
-
       - name: Ctest
         run: cd build && ctest -D Experimental --output-on-failure

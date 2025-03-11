@@ -2,6 +2,7 @@
 #include "HalideComplex.h"
 #include <math.h>
 #define HAVE_HALIVER
+#define CONCRETE_BOUNDS
 
 using namespace Halide;
 
@@ -37,14 +38,25 @@ public:
     ImageParam n_dir;
     ImageParam n_vis;
     
+#ifdef CONCRETE_BOUNDS
+    Expr n_cb;
+    Expr n_sol;
+    Expr n_antennas;
+    Expr max_n_visibilities;
+    Expr max_n_direction_solutions;
+    Expr max_n_directions;
+#else
     Param<int> n_cb;
     Param<int> n_sol;
     Param<int> n_antennas;
     Param<int> max_n_visibilities;
     Param<int> max_n_direction_solutions;
     Param<int> max_n_directions;
+#endif
     Param<double> step_size;
     Param<bool> phase_only;
+
+    
 
     Func v_res, model, sol, next_sol, antenna_1, antenna_2, solution_index;
     Var x, y, i, j, v, si, a, pol, c, cb, d;
@@ -65,13 +77,15 @@ public:
         n_sol_direction(type_of<int32_t>(), 2, "n_sol_direction"), // <2> [n_cb][dir] uint32_t
         n_dir(type_of<int32_t>(), 1, "n_dir"), // <1> [n_cb] uint32_t
         n_vis(type_of<int32_t>(), 1, "n_vis"), // <1> [n_cb] uint32_t
-        
+
+#ifndef CONCRETE_BOUNDS
         n_cb("n_cb"),
         n_sol("n_sol"),
         n_antennas("n_antennas"),
         max_n_visibilities("max_n_visibilities"),
         max_n_direction_solutions("max_n_direction_solutions"),
         max_n_directions("max_n_directions"),
+#endif
         step_size("step_size"),
         phase_only("phase_only"),
         
@@ -79,6 +93,14 @@ public:
         antenna_1("antenna_1"), antenna_2("antenna_2"), solution_index("solution_index"),
         x("x"), y("y"), i("i"), j("j"), v("v"), si("si"), a("a"), pol("pol"), c("c"), cb("cb"), d("d")
         {
+#ifdef CONCRETE_BOUNDS
+            n_cb = 4;
+            n_sol = 3;
+            n_antennas = 50;
+            max_n_visibilities = 230930;
+            max_n_direction_solutions = 1;
+            max_n_directions = 3;
+#endif
 
         schedule = 0;
 
@@ -198,7 +220,8 @@ public:
         ant_i(a, v, cb) = select(a == 0, antenna_1(v, cb), antenna_2(v, cb));
         RDom rv2(0, 2, 0, max_n_visibilities, "rv2");
         rv2.where(rv2.y < n_vis(cb));
-        Expr rel_si = unsafe_promise_clamped(solution_index(rv2.y, d, cb) - n_sol0_direction(d, cb), 0, max_n_direction_solutions-1);
+        // Expr rel_si = unsafe_promise_clamped(solution_index(rv2.y, d, cb) - n_sol0_direction(d, cb), 0, max_n_direction_solutions-1);
+        Expr rel_si = clamp(solution_index(rv2.y, d, cb) - n_sol0_direction(d, cb), 0, max_n_direction_solutions-1);
         numerator(si,a,d,cb) = MatrixDiag({0.0f, 0.0f, 0.0f, 0.0f});
         numerator(rel_si, ant_i(rv2.x, rv2.y, cb), d, cb) += numerator_inter(rv2.x, rv2.y, d, cb);
         denominator(i,si,a,d,cb) = 0.0f;
@@ -224,7 +247,8 @@ public:
         RVar si_r2 = d_r2.x;
         d_r2.where( d_r < n_dir(cb) && si_r2 < n_sol_direction(d_r, cb));
         Func next_solutions_complex1("next_solutions_complex1");
-        Expr si_total = unsafe_promise_clamped(n_sol0_direction(d_r, cb) + si_r2, 0, n_sol-1);
+        // Expr si_total = unsafe_promise_clamped(n_sol0_direction(d_r, cb) + si_r2, 0, n_sol-1);
+        Expr si_total = clamp(n_sol0_direction(d_r, cb) + si_r2, 0, n_sol-1);
         next_solutions_complex1(pol,si,a,cb) = {undef<double>(), undef<double>()};
         next_solutions_complex1(pol,si_total,a,cb) = next_solutions_complex0(pol,si_r2,d_r,a,cb);
 
@@ -370,8 +394,6 @@ public:
 
             RVar r_out("r_out"), r_in("r_in");
             denominator.compute_at(next_solutions_complex1, d_r)
-                // .fuse(si, a, fuse)
-                // .gpu_tile(fuse, block, thread, block_size, TailStrategy::GuardWithIf)
                 .split(a, a_out, a_in, n_antennas/8, TailStrategy::GuardWithIf)
                 .parallel(a_out)
                 .unroll(i)
@@ -430,21 +452,31 @@ public:
 
     void compile(){
         try{
+#ifdef CONCRETE_BOUNDS
+            n_cb = 1;
+            n_antennas = 50;
+            max_n_visibilities = 230930;
+            max_n_direction_solutions = 3;
+            max_n_directions = 8;
+            std::vector<Argument> args = {ant, solution_map, v_res_, model_, sol_, next_sol_,
+                n_sol0_direction, n_sol_direction, n_dir, n_vis,
+                step_size, phase_only};
+#else
             std::vector<Argument> args = {ant, solution_map, v_res_, model_, sol_, next_sol_,
               n_sol0_direction, n_sol_direction, n_dir, n_vis,
               n_cb, n_sol, n_antennas, max_n_visibilities, max_n_direction_solutions, max_n_directions,
               step_size, phase_only};
+#endif
             Target target = get_target_from_environment();
-            target.set_feature(Target::AVX512);
             target.set_features({Target::NoAsserts, Target::NoBoundsQuery});
-            // Target target_gpu = target;
             #ifndef HAVE_HALIVER
+            target.set_feature(Target::AVX512);
             target.set_features({Target::CUDA, Target::CLDoubles});
             #endif
-            Func debug_vres_in("debug_vres_in");
-            debug_vres_in = out(0, false);
-            Func debug_substract_all("debug_substract_all");
-            debug_substract_all = out(1, false);
+            // Func debug_vres_in("debug_vres_in");
+            // debug_vres_in = out(0, false);
+            // Func debug_substract_all("debug_substract_all");
+            // debug_substract_all = out(1, false);
             Func result("out"), result_gpu("out_gpu");
             result = out(-1, false);
 #ifndef HAVE_HALIVER
@@ -463,8 +495,8 @@ public:
                 
             result.compile_to_c("PerformIterationHalide.c", args, {}, "PerformIterationHalide", target);
 #else
-            debug_vres_in.compile_to_c("VResIn.cc", args, "VResIn", target);
-            debug_substract_all.compile_to_c("SubstractFull.cc", args, "SubstractFull", target);
+            // debug_vres_in.compile_to_c("VResIn.cc", args, "VResIn", target);
+            // debug_substract_all.compile_to_c("SubstractFull.cc", args, "SubstractFull", target);
             result.compile_to_c("PerformIterationHalide.cc", args, "PerformIterationHalide", target);
             result_gpu.compile_to_c("PerformIterationHalideGPU.cc", args, "PerformIterationHalideGPU", target);
 #endif

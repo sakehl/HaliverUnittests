@@ -60,9 +60,7 @@ public:
         sol_(type_of<double>(), 4, "sol_"), // <4> [n_ant][n_dir_sol][2] Complex Double (+1)
         next_sol_(type_of<double>(), 4, "next_sol_"), // <4> [n_ant][n_dir_sol][2] Complex Double (+1)
         solution_index0("solution_index0"),
-#ifdef CONCRETE_BOUNDS
-
-#else 
+#ifndef CONCRETE_BOUNDS
         n_dir_sol("n_dir_sol"), 
         n_solutions("n_solutions"),
         n_vis("n_vis"),
