@@ -1,0 +1,151 @@
+# This is a basic workflow that is manually triggered
+
+name: Do tests
+
+# Controls when the action will run. Workflow runs when manually triggered using the UI
+# or API.
+on:
+  workflow_dispatch
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "greet"
+  build_halide:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Clone HaliVer
+        uses: actions/checkout@v4
+        with:
+          repository: 'sakehl/Halide'
+          path: '.'
+          ref: 'annotated_halide'
+
+      - name: Make build directory
+        run: mkdir build
+        
+      - name: Cache dependencies and compilation
+        id: cache-halide-build
+        uses: actions/cache@v4
+        with:
+          path: build
+          key: halide-build-${{ hashFiles('src') }}
+          restore-keys: |
+            halide-build
+
+      - name: Install dependencies
+        if: ${{ steps.cache-halide-build.outputs.cache-hit != 'true' }}
+        run: |
+          sudo apt update
+          sudo apt install -y --no-install-recommends ca-certificates build-essential curl git wget unzip \
+            cmake clang-12 ninja-build zlib1g-dev llvm-12-dev \
+            libclang-12-dev liblld-12 liblld-12-dev
+
+      - name: Configure cmake
+        if: ${{ steps.cache-halide-build.outputs.cache-hit != 'true' }}
+        run: |
+          mkdir build/halide_install
+          cmake -G Ninja \
+            -DHalide_REQUIRE_LLVM_VERSION=12 \
+            -DLLVM_PACKAGE_VERSION=12.0.1 \
+            -DLLVM_DIR=/usr/lib/llvm-12/lib/cmake/llvm \
+            -DWITH_TESTS=NO -DWITH_AUTOSCHEDULERS=NO -DWITH_PYTHON_BINDINGS=NO -DWITH_TUTORIALS=NO -DWITH_DOCS=NO -DCMAKE_BUILD_TYPE=Release -DTARGET_AARCH64=NO -DTARGET_AMDGPU=NO -DTARGET_ARM=NO -DTARGET_HEXAGON=NO -DTARGET_MIPS=NO -DTARGET_NVPTX=NO -DTARGET_POWERPC=NO -DTARGET_RISCV=NO -DTARGET_WEBASSEMBLY=NO -S . -B build
+          cmake --build build
+          cmake --install build --prefix ./build/halide_install
+      
+      - name: Upload Halide
+        uses: actions/upload-artifact@v4
+        with:
+          name: halide_install
+          path: ./build/halide_install
+  # This workflow contains a single job called "greet"
+  compile_vercors:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Clone VerCors
+        uses: actions/checkout@v4
+        with:
+          repository: 'utwente-fmt/vercors'
+          path: '.'
+          ref: 'AddSMTSolver'
+      
+      - name: Cache dependencies and compilation\
+        id: cache-vercors-build
+        uses: actions/cache@v4
+        with:
+          path: out
+          key: vercors-ci-ubuntu-${{ hashFiles('build.sc') }}-${{ hashFiles('src') }}
+          restore-keys: |
+            vercors-ci-ubuntu-${{ hashFiles('build.sc') }}
+            vercors-ci-ubuntu
+
+      - name: Install Java
+        if: ${{ steps.cache-vercors-build.outputs.cache-hit != 'true' }}
+        uses: actions/setup-java@v4
+        with:
+            distribution: 'zulu'
+            java-version: '17'
+
+      - name: Compile
+        if: ${{ steps.cache-vercors-build.outputs.cache-hit != 'true' }}
+        run: ./mill vercors.main.unixTar
+      
+      - name: Upload VerCors
+        uses: actions/upload-artifact@v4
+        with:
+          name: vercorsTar
+          path: out/vercors/main/unixTar.dest/vercors-*-unix.tar.xz
+
+  compile_tests:
+    needs: 
+      - build_halide
+      - compile_vercors
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y --no-install-recommends ca-certificates cmake ninja-build
+      - name: Clone Tests
+        uses: actions/checkout@v4
+        with:
+          path: '.'
+      
+      - name: Download Halide
+        uses: actions/download-artifact@v4
+        with:
+          name: halide_install
+          path: 'halide_install'
+    
+      - name: Download VerCors
+        uses: actions/download-artifact@v4
+        with:
+          name: vercorsTar
+          path: '.'
+      - name: Unzip VerCors
+        run: mkdir vercors && tar xf vercors-*-unix.tar.xz -C vercors
+      - name: Get version
+        run: ./vercors/vercors --version
+
+      - name: CMake initialize
+        run: |
+          cmake -G Ninja -S . -B build --install-prefix $PWD/halide_install \
+            -D VCT=$PWD/vercors/vercors 
+      - name: CMake build
+        run: cmake --build build --target all
+
+      - name: test
+        run: |
+          ./vercors/vercors $PWD/build/input_buffer_front.pvl
+
+      - name: Ctest
+        run: cd build && ctest -R input_buffer --output-on-failure
+
+      - name: Ctest
+        run: cd build && ctest -D Experimental --output-on-failure

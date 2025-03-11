@@ -6,12 +6,14 @@ include(CTest)
 set(CMAKE_CXX_STANDARD 11)  # or newer
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
-set(CMAKE_PREFIX_PATH ../../halide/install)
+list(APPEND CMAKE_PREFIX_PATH ../../halide/install)
 
 find_package(Halide REQUIRED)
 
 set(OUTFILE halide.out)
-set(VERCORS /home/lars/data/vercors/bin/vct --silicon-quiet --no-infer-heap-context-into-frame --dev-total-timeout=600)
+set(VCT "/home/lars/data/vercors/bin/vct" CACHE STRING "Default value for VCT")
+set(VERCORS ${VCT} --silicon-quiet --no-infer-heap-context-into-frame --dev-total-timeout=600)
+# set(CMAKE_BINARY_DIR "/home/lars/data/HaliVerTests/Unittests/build" CACHE STRING "Default value for VCT")
 
 
 function(build_unit_test)
@@ -34,7 +36,7 @@ function(build_unit_test)
     )
 
     add_test(NAME ${UT_TARGET}_front.pvl
-      COMMAND ${VERCORS} ${UT_TARGET}_front.pvl
+      COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}_front.pvl
       )
     set_tests_properties(${UT_TARGET}_front.pvl PROPERTIES
       WILL_FAIL ${UT_SHOULDFAIL}
@@ -50,7 +52,7 @@ function(build_unit_test)
   endif()
 
   add_test(NAME ${UT_TARGET}.c
-    COMMAND ${VERCORS} ${UT_TARGET}.c
+    COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}.c
   )
   set_tests_properties(${UT_TARGET}.c PROPERTIES
     WILL_FAIL ${UT_SHOULDFAIL}
@@ -66,7 +68,7 @@ function(build_unit_test)
     )
 
     add_test(NAME ${UT_TARGET}_mem.c
-      COMMAND ${VERCORS} ${UT_TARGET}_mem.c
+      COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}_mem.c
     )
     set_tests_properties(${UT_TARGET}_mem.c
       PROPERTIES
@@ -105,7 +107,7 @@ function(build_experiment_test)
   )
 
   add_test(NAME ${UT_TARGET}_front.pvl
-    COMMAND ${VERCORS} ${UT_TARGET}_front.pvl
+    COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}_front.pvl
   )
   set_tests_properties(${UT_TARGET}_front.pvl PROPERTIES
     LABELS experiment:${UT_DIR}:front:${UT_LABELS}
@@ -120,7 +122,7 @@ function(build_experiment_test)
     )
 
     add_test(NAME ${UT_TARGET}_${V}.c
-      COMMAND ${VERCORS} ${UT_TARGET}_${V}.c
+      COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}_${V}.c
     )
     set_tests_properties(${UT_TARGET}_${V}.c PROPERTIES
       LABELS experiment:${UT_DIR}:back:${UT_LABELS}
@@ -137,7 +139,7 @@ function(build_experiment_test)
     )
 
     add_test(NAME ${UT_TARGET}_${V}_mem.c
-      COMMAND ${VERCORS} ${UT_TARGET}_${V}_mem.c
+      COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}_${V}_mem.c
     )
     set_tests_properties(${UT_TARGET}_${V}_mem.c PROPERTIES
       LABELS experiment:${UT_DIR}:back:${UT_LABELS}:mem
@@ -183,7 +185,7 @@ function(build_single_experiment_test)
   )
 
   add_test(NAME ${UT_TARGET}_mem.c
-    COMMAND ${VERCORS} ${UT_TARGET}_mem.c
+    COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}_mem.c
   )
   set_tests_properties(${UT_TARGET}_mem.c PROPERTIES
     LABELS ${UT_DIR}:back:${UT_LABELS}
@@ -303,7 +305,7 @@ add_custom_target(GenerateHalideFull_output ALL
 
 foreach(FILE SubDirectionHalide.c SolveDirectionHalide.c StepHalide.c PerformIterationHalide.c)
   add_test(NAME ${FILE}
-    COMMAND ${VERCORS} ${FILE}
+    COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${FILE}
   )
   set_tests_properties(${FILE} PROPERTIES
     LABELS padre:back

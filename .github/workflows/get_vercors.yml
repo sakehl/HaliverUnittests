@@ -1,0 +1,49 @@
+# This is a basic workflow that is manually triggered
+
+name: Install VerCors
+
+# Controls when the action will run. Workflow runs when manually triggered using the UI
+# or API.
+on:
+  workflow_dispatch
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "greet"
+  compile_vercors:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Clone VerCors
+        uses: actions/checkout@v4
+        with:
+          repository: 'utwente-fmt/vercors'
+          path: '.'
+          ref: 'AddSMTSolver'
+      
+      - name: Cache dependencies and compilation\
+        id: cache-vercors-build
+        uses: actions/cache@v4
+        with:
+          path: out
+          key: vercors-ci-ubuntu-${{ hashFiles('build.sc') }}-${{ hashFiles('src') }}
+          restore-keys: |
+            vercors-ci-ubuntu-${{ hashFiles('build.sc') }}
+            vercors-ci-ubuntu
+
+      - name: Install Java
+        if: ${{ steps.cache-vercors-build.outputs.cache-hit != 'true' }}
+        uses: actions/setup-java@v4
+        with:
+            distribution: 'zulu'
+            java-version: '17'
+
+      - name: Compile
+        if: ${{ steps.cache-vercors-build.outputs.cache-hit != 'true' }}
+        run: ./mill vercors.main.unixTar
+      
+      - name: Upload VerCors
+        uses: actions/upload-artifact@v4
+        with:
+          name: vercorsTar
+          path: out/vercors/main/unixTar.dest/vercors-*-unix.tar.xz
