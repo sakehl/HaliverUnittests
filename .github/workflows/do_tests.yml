@@ -22,7 +22,7 @@ jobs:
           ref: 'annotated_halide'
 
       - name: Make build directory
-        run: mkdir build
+        run: mkdir -p build
         
       - name: Cache dependencies and compilation
         id: cache-halide-build
@@ -44,7 +44,7 @@ jobs:
       - name: Configure cmake
         if: ${{ steps.cache-halide-build.outputs.cache-hit != 'true' }}
         run: |
-          mkdir build/halide_install
+          mkdir -p build/halide_install
           cmake -G Ninja \
             -DHalide_REQUIRE_LLVM_VERSION=12 \
             -DLLVM_PACKAGE_VERSION=12.0.1 \
@@ -129,7 +129,7 @@ jobs:
           name: vercorsTar
           path: '.'
       - name: Unzip VerCors
-        run: mkdir vercors && tar xf vercors-*-unix.tar.xz -C vercors
+        run: mkdir -p vercors && tar xf vercors-*-unix.tar.xz -C vercors
       - name: Get version
         run: ./vercors/vercors --version
 
