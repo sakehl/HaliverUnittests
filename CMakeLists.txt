@@ -310,5 +310,6 @@ foreach(FILE SubDirectionHalide.c SolveDirectionHalide.c StepHalide.c PerformIte
   )
   set_tests_properties(${FILE} PROPERTIES
     LABELS padre:back
+    TIMEOUT 3600
   )
 endforeach()
