@@ -107,9 +107,6 @@ jobs:
     needs: 
       - build_halide
       - compile_vercors
-    strategy:
-      matrix:
-        test_set: [-L experiment -LE mem, -L experiment -L mem, -L unit -L mem, -L unit -LE mem, -L front, -L padre]
     runs-on: ubuntu-22.04
     steps:
       - name: Install Java
