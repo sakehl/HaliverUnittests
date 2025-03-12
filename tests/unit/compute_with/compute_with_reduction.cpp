@@ -21,14 +21,12 @@ int main(int argc, char *argv[]) {
   denominator_inter.ensures(implies(i==0, denominator_inter(i, vis) == 1+vis));
   denominator_inter.ensures(implies(i!=0, denominator_inter(i, vis) == 0));
   denominator(rv) += denominator_inter(0, rv);
-  denominator.invariant(denominator(rv) ==  1+rv);
-  denominator.ensures(denominator(si) == 1+si);
+  denominator.invariant(denominator(si) == 1 + select(0<=si && si <rv, 1+si,0));
+  denominator.ensures(denominator(si) == 1 + select(0<=si && si <10, 1+si,0));
 
-  numerator(rv) += rv;
-  // numerator.invariant(forall("i", i<0 || i>=10, numerator(i) == 0));
-  // numerator.invariant(forall("i", rv <= i && i<10, numerator(i) == i));
-  // numerator.invariant(forall("i", 0<=i && i<rv, numerator(i) == i));
-  // numerator.ensures(implies(0<=si && si<10, numerator(si) == si));
+  numerator(rv) += 2*rv;
+  numerator.invariant(numerator(si) == 0 + select(0<=si && si <rv, 2*si,0));
+  numerator.ensures(numerator(si) == 0 + select(0<=si && si <10, 2*si,0));
 
   numerator.compute_root();
   denominator.compute_root();
@@ -36,7 +34,7 @@ int main(int argc, char *argv[]) {
 
   Func out("out");
   out(si) = numerator(si) / denominator(si);
-  out.ensures(out(si) == (si / (1+si)));
+  out.ensures(out(si) == select(0<=si && si <10, 2*si / (2+ si), 0) );
 
   out.output_buffer().dim(0).set_bounds(0,10);
   

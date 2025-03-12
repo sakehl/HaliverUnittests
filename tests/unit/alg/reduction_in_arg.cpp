@@ -16,8 +16,8 @@ int main(int argc, char *argv[]) {
   out(x) = x;
   out.ensures(out(x) == x);
   out(r) += f(r);
-  // For values smaller than x, this never gets executed
-  // so x<0 ==> out(x) == x;
+  // For values smaller than 0 or >=42, this never gets executed
+  // so x<0 || x>=42 ==> out(x) == x;
   // For values for which r is smaller or equal than x, the reduction domain is not yet executed
   // So r<=x ==> out(x) == x;
   // For the remaining values, we have added one to the value of x, so

@@ -12,8 +12,8 @@ find_package(Halide REQUIRED)
 
 set(OUTFILE halide.out)
 set(VCT "/home/lars/data/vercors/bin/vct" CACHE STRING "Default value for VCT")
-set(VERCORS ${VCT} --silicon-quiet --no-infer-heap-context-into-frame --dev-total-timeout=600)
-set(VERCORS_PADRE ${VCT} --silicon-quiet --no-infer-heap-context-into-frame --dev-total-timeout=3600)
+set(VERCORS ${VCT} --silicon-quiet --no-infer-heap-context-into-frame --dev-total-timeout=600 --dev-assert-timeout 0 )
+set(VERCORS_PADRE ${VCT} --silicon-quiet --no-infer-heap-context-into-frame --dev-total-timeout=3600 --dev-assert-timeout 0 )
 # set(CMAKE_BINARY_DIR "/home/lars/data/HaliVerTests/Unittests/build" CACHE STRING "Default value for VCT")
 
 
@@ -208,6 +208,7 @@ build_unit_test(TARGET tuple DIR alg)
 build_unit_test(TARGET tuple_pipeline DIR alg)
 build_unit_test(TARGET multidim DIR alg)
 build_unit_test(TARGET reduction_where DIR alg)
+build_unit_test(TARGET specialize DIR alg)
 
 # Floats / Rationals
 build_unit_test(TARGET input_floats DIR alg AND_FRONT)
@@ -243,7 +244,7 @@ build_unit_test(TARGET compute_update DIR compute_at)
 # Compute_with
 build_unit_test(TARGET compute_with_half DIR compute_with)
 build_unit_test(TARGET compute_with_inline DIR compute_with)
-build_unit_test(TARGET compute_with_reduction DIR compute_with)
+build_unit_test(TARGET compute_with_reduction DIR compute_with AND_FRONT)
 
 # Store_at
 build_unit_test(TARGET store_half DIR store_at)
