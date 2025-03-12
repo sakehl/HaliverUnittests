@@ -97,10 +97,13 @@ jobs:
           name: vercorsTar
           path: out/vercors/main/unixTar.dest/vercors-*-unix.tar.xz
 
-  compile_tests:
+  run_tests:
     needs: 
       - build_halide
       - compile_vercors
+    strategy:
+      matrix:
+        test_set: [-L experiment -LE mem, -L experiment -L mem, -L unit -L mem, -L unit -LE mem, -L front, -L padre]
     runs-on: ubuntu-22.04
     steps:
       - name: Install Java
@@ -141,4 +144,4 @@ jobs:
         run: cmake --build build --target all
 
       - name: Ctest
-        run: cd build && ctest -D Experimental --output-on-failure
+        run: cd build && ctest -D Experimental --output-on-failure ${{ matrix.test_set}}
