@@ -350,10 +350,8 @@ public:
                 ;
             numerator.compute_at(next_solutions_complex1, d_r)
                 .update()
-                .unroll(rv2.x)
-// #ifndef HAVE_HALIVER                
+                .unroll(rv2.x)    
                 .compute_with(denominator.update(), rv2.y);
-// #endif
                 ;
 #ifndef HAVE_HALIVER   
             cor_model_2.compute_at(denominator, rv2.y);

@@ -220,6 +220,7 @@ build_unit_test(TARGET tuple DIR alg)
 build_unit_test(TARGET tuple_pipeline DIR alg)
 build_unit_test(TARGET multidim DIR alg)
 build_unit_test(TARGET reduction_where DIR alg)
+build_unit_test(TARGET reduction_rfactor DIR alg ONLY_MEM)
 build_unit_test(TARGET specialize DIR alg)
 
 # Floats / Rationals

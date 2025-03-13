@@ -1,0 +1,62 @@
+#include "Halide.h"
+#include <stdio.h>
+
+using namespace Halide;
+
+int main(int argc, char *argv[]) {
+
+  Func f("f"), out("out");
+  Var x("x"), y("y");
+
+  f(x) = 1;
+  f.ensures(f(x) == 1);
+  f.compute_root();
+
+  RDom r(0,42, "r");
+  out(x, y) = x + y;
+  out.ensures(out(x,y) == x+y);
+  out(x,y) += f(r);
+  out.invariant(out(x,y) == x+y+r);
+  out.ensures(out(x,y) == x+y+42); 
+
+  int nx = 100, ny = 42;
+  out.output_buffer().dim(0).set_bounds(0,nx);
+  out.output_buffer().dim(1).set_bounds(0,ny);
+  out.output_buffer().dim(1).set_stride(nx);
+
+  RVar r_out("r_out"), r_in("r_in");
+  out.update()
+    .reorder(x, y, r)
+    .split(r, r_out, r_in, 42/8, TailStrategy::GuardWithIf)
+    ;
+
+  Var par("par");
+  Func out_inter("out_inter");
+  out_inter = out.update().rfactor(r_out, par);
+  out_inter.compute_root()
+      .parallel(par)
+      .update()
+      .parallel(par)
+      ;
+  
+  Target target = Target();
+  Target new_target = target
+    .with_feature(Target::NoAsserts)
+    .with_feature(Target::NoBoundsQuery)
+    ;
+  
+  std::vector<Annotation> pipeline_anns;
+
+  std::string name = argv[1];
+  std::string mem_only_s = "";
+  if(argc >= 3){
+    mem_only_s = argv[2];
+  }
+  bool mem_only = mem_only_s == "-mem_only";
+  if(mem_only){
+    name += "_mem";
+  }
+  out.translate_to_pvl(name +"_front.pvl", {}, pipeline_anns); 
+  out.compile_to_c(name + ".c" , {}, pipeline_anns, name, new_target, mem_only);
+  out.print_loop_nest();
+}

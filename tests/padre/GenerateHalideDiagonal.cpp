@@ -73,7 +73,7 @@ public:
         antenna_1("antenna_1"), antenna_2("antenna_2"), solution_index("solution_index"),
         v_res0("v_res0"), sol_ann("sol_ann"), sol_ann_("sol_ann_"){
 
-        schedule = 1;
+        schedule = 2;
 
 #ifdef CONCRETE_BOUNDS
         // solution_index0 = 0;
@@ -335,8 +335,8 @@ public:
         Expr nan = Expr(std::numeric_limits<double>::quiet_NaN());
         Complex cnan = Complex(nan, nan);
 
-        next_solutions_inter(pol ,si,a) = {undef<double>(), undef<double>()};
-        next_solutions_inter(pol,si,a) = tuple_select(
+        // next_solutions_inter(pol ,si,a) = {undef<double>(), undef<double>()};
+        next_solutions_inter(pol, si,a) = tuple_select(
             denominator(pol,si,a) == 0.0f, cnan,
             pol == 0, Tuple(castC<double>(MatrixDiag(numerator(si,a)).m00) / cast<double>(denominator(0,si,a))),
             castC<double>(MatrixDiag(numerator(si,a)).m11) / cast<double>(denominator(1,si,a))
@@ -357,18 +357,73 @@ public:
             denominator.compute_root();
             cor_model_transp_1.compute_root();
             cor_model_2.compute_root();
-        }
-        if(schedule == 1) {
-            numerator.compute_root();
-            denominator.compute_root();
-            denominator.update().reorder(i, rv2.x, rv2.y).unroll(i).unroll(rv2.x);
-            numerator.update().reorder(rv2.x, rv2.y).unroll(rv2.x);
-            numerator.update().compute_with(denominator.update(), rv2.y);
-            cor_model_transp_1.compute_at(denominator, rv2.y);
-            cor_model_2.compute_at(denominator, rv2.y);
-            cor_model_2.compute_with(cor_model_transp_1, v);
+        } else if(schedule == 1) {
+            next_solutions.compute_root()
+                .unroll(pol)
+                .unroll(c)
+                ;
+            RVar r_out("r_out"), r_in("r_in");
+            denominator.compute_root()
+                .update()
+                .reorder(i, rv2.x, rv2.y)
+                .unroll(i)
+                .unroll(rv2.x)
+                ;
+            numerator.compute_root()
+                .update()
+                .unroll(rv2.x)
+                .compute_with(denominator.update(), rv2.y);
+                ;
+        } else if(schedule == 2) {
+            Var a_out("a_out"), a_in("a_in");
+            next_solutions.compute_root()
+                .split(a, a_out, a_in, n_antennas/8, TailStrategy::GuardWithIf)
+                .unroll(pol)
+                .unroll(c)
+                ;
+            RVar r_out("r_out"), r_in("r_in");
+            denominator.compute_root()
+                // .split(a, a_out, a_in, n_antennas/8, TailStrategy::GuardWithIf)
+                // .parallel(a_out)
+                .unroll(i)
+                .update()
+                .reorder(i, rv2.x, rv2.y)
+                .unroll(i)
+                .unroll(rv2.x)
+                .split(rv2.y, r_out, r_in, n_vis/8, TailStrategy::GuardWithIf)
+                ;
+            
+            Var par("par");
+            Func denom_inter("denom_inter");
+            denom_inter = denominator.update().rfactor(r_out, par);
+            denom_inter.compute_root()
+                .parallel(par)
+                .unroll(i)
+                .update()
+                .parallel(par)
+                ;
+            
+            numerator.compute_root()
+                // .split(a, a_out, a_in, n_antennas/8, TailStrategy::GuardWithIf)
+                // .parallel(a_out)
+                .update()
+                .unroll(rv2.x)
+                .split(rv2.y, r_out, r_in, n_vis/8, TailStrategy::GuardWithIf)
+                ;
 
-            next_solutions.unroll(c).unroll(pol);
+            Func num_inter("denom_inter");
+            num_inter = numerator.update().rfactor(r_out, par);
+            num_inter.compute_root()
+                .parallel(par)
+                .compute_with(denom_inter, si)
+                .update()
+                .parallel(par)
+                .compute_with(denom_inter.update(), r_in);
+                ;
+            numerator.compute_with(denominator, si)
+                .update()
+                .compute_with(denominator.update(), r_out)
+                ;
         }
             
         return next_solutions;
@@ -396,7 +451,7 @@ public:
         set_bounds({{0, 2}, {0, 2}, {0, n_solutions}, {0, n_antennas}}, next_solutions.output_buffer());
         
         next_solutions
-            // .specialize(phase_only)
+            .specialize(phase_only)
             .unroll(c)
         ;
 
@@ -419,19 +474,6 @@ public:
             } else {
                 std::cout << "The target " << target.to_string() << " is supported on this host." << std::endl;
             }
-            
-            Func v_sub_out = AddOrSubtractDirection(false, v_res0);
-            Func v_sub_out_matrix = matrixToDimensions(v_sub_out, {v});
-            v_sub_out_matrix.bound(v, 0, n_vis);
-            set_bounds({{0, 2}, {0, 2}, {0, 2}, {0, n_vis}}, v_sub_out_matrix.output_buffer());
-
-            Func idFunc = matrixId(v_res_in);
-            set_bounds({{0, 2}, {0, 2}, {0, 2}, {0, n_vis}}, idFunc.output_buffer());
-            Func testNumerator = TestNumerator(v_res0);
-            set_bounds({{0, 2}, {0, 2}, {0, n_vis}, {0, n_antennas}}, testNumerator.output_buffer());
-
-            Func solve_out = SolveDirection(v_res0);
-            Func step_out = Step();
 #ifdef CONCRETE_BOUNDS
             std::vector<Argument> step_args = {phase_only, step_size, sol_, next_sol_};
 #else
@@ -451,15 +493,28 @@ public:
                 && solution_index0 == 0
                 );
             
-
-            // idFunc.compile_to_c("IdHalide.c", args, {bounds}, "IdHalide", target);
-            // testNumerator.compile_to_c("TestNumerator.c", args, {bounds}, "TestNumerator", target);
-            v_sub_out_matrix.compile_to_c("SubDirectionHalide.c", args, {bounds}, "SubDirection", target);
+            Func solve_out = SolveDirection(v_res0);
             solve_out.compile_to_c("SolveDirectionHalide.c", args, {bounds}, "SolveDirection", target);
-            
+            solve_out.print_loop_nest();
+
+            Func step_out = Step();
             Annotation step_bounds = context_everywhere(n_antennas>0 && n_vis>0 && n_solutions>0
                 && n_antennas == 50 && n_solutions == 8 && n_vis == 230930 && n_dir_sol ==3);
             step_out.compile_to_c("StepHalide.c", step_args, {step_bounds}, "StepHalide", target);
+            
+            Func v_sub_out = AddOrSubtractDirection(false, v_res0);
+            Func v_sub_out_matrix = matrixToDimensions(v_sub_out, {v});
+            v_sub_out_matrix.bound(v, 0, n_vis);
+            set_bounds({{0, 2}, {0, 2}, {0, 2}, {0, n_vis}}, v_sub_out_matrix.output_buffer());
+            v_sub_out_matrix.compile_to_c("SubDirectionHalide.c", args, {bounds}, "SubDirection", target);
+
+            // Func idFunc = matrixId(v_res_in);
+            // set_bounds({{0, 2}, {0, 2}, {0, 2}, {0, n_vis}}, idFunc.output_buffer());
+            // idFunc.compile_to_c("IdHalide.c", args, {bounds}, "IdHalide", target);
+
+            // Func testNumerator = TestNumerator(v_res0);
+            // set_bounds({{0, 2}, {0, 2}, {0, n_vis}, {0, n_antennas}}, testNumerator.output_buffer());
+            // testNumerator.compile_to_c("TestNumerator.c", args, {bounds}, "TestNumerator", target);
 #else
             idFunc.compile_to_c("IdHalide.cc", args, "IdHalide", target);
             testNumerator.compile_to_c("TestNumerator.cc", args, "TestNumerator", target);
