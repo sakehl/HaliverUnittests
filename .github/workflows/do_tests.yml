@@ -103,7 +103,12 @@ jobs:
       - compile_vercors
     strategy:
       matrix:
-        test_set: [-L experiment -LE mem, -L experiment -L mem, -L unit -L mem, -L unit -LE mem, -L front, -L padre]
+        test_set: [-L experiment -L back -LE mem,
+          -L experiment -L back -L mem,
+          -L unit -L back -L mem,
+          -L unit -L back -LE mem,
+          -L front,
+          -L padre]
     runs-on: ubuntu-22.04
     continue-on-error: true
     steps:
@@ -145,4 +150,6 @@ jobs:
         run: cmake --build build --target all
 
       - name: Ctest
-        run: cd build && ctest -D Experimental --output-on-failure ${{ matrix.test_set}}
+        run: |
+          cd build 
+          ctest -D Experimental --output-on-failure ${{ matrix.test_set }}

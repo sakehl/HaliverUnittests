@@ -12,8 +12,8 @@ find_package(Halide REQUIRED)
 
 set(OUTFILE halide.out)
 set(VCT "/home/lars/data/vercors/bin/vct" CACHE STRING "Default value for VCT")
-set(VERCORS ${VCT} --silicon-quiet --no-infer-heap-context-into-frame --dev-total-timeout=600 --dev-assert-timeout 0 )
-set(VERCORS_PADRE ${VCT} --silicon-quiet --no-infer-heap-context-into-frame --dev-total-timeout=3600 --dev-assert-timeout 0 )
+set(VERCORS ${VCT} --silicon-quiet --no-infer-heap-context-into-frame --dev-total-timeout=1200 --dev-assert-timeout 60)
+set(VERCORS_PADRE ${VCT} --silicon-quiet --no-infer-heap-context-into-frame --dev-total-timeout=3600 --dev-assert-timeout 60)
 # set(CMAKE_BINARY_DIR "/home/lars/data/HaliVerTests/Unittests/build" CACHE STRING "Default value for VCT")
 
 
