@@ -212,7 +212,6 @@ function(build_padre)
 
   set(CB "")
   if(${UT_CONCRETE_BOUNDS})
-    add_definitions(-DCONCRETE_BOUNDS)
     set(CB "CB")
   endif()
 
@@ -220,6 +219,10 @@ function(build_padre)
   add_executable(GenerateHalideFull${CB} tests/padre/GenerateHalideFull.cpp)
   target_link_libraries(GenerateHalideDiagonal${CB} PRIVATE Halide::Halide)
   target_link_libraries(GenerateHalideFull${CB} PRIVATE Halide::Halide)
+  if(${UT_CONCRETE_BOUNDS})
+    target_compile_definitions(GenerateHalideDiagonal${CB} PUBLIC CONCRETE_BOUNDS)
+    target_compile_definitions(GenerateHalideFull${CB} PUBLIC CONCRETE_BOUNDS)
+  endif()
   
   add_custom_command(
     OUTPUT SubDirectionHalide${CB}.c SolveDirectionHalide${CB}.c StepHalide${CB}.c
