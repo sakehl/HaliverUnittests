@@ -92,8 +92,8 @@ function(build_unit_test)
 endfunction()
 
 function(build_experiment_test)
-  set(options)
-  set(oneValueArgs TARGET DIR NO_TEST)
+  set(options NO_TEST)
+  set(oneValueArgs TARGET DIR)
   set(multiValueArgs LABELS SCHEDULES)
   cmake_parse_arguments(UT "${options}" "${oneValueArgs}"
                           "${multiValueArgs}" ${ARGN} )
