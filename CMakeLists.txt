@@ -93,12 +93,15 @@ endfunction()
 
 function(build_experiment_test)
   set(options)
-  set(oneValueArgs TARGET DIR)
+  set(oneValueArgs TARGET DIR NO_TEST)
   set(multiValueArgs LABELS SCHEDULES)
   cmake_parse_arguments(UT "${options}" "${oneValueArgs}"
                           "${multiValueArgs}" ${ARGN} )
 
-  add_executable(${UT_TARGET} tests/${UT_DIR}/${UT_TARGET}.cpp)
+  
+  if(NOT TARGET ${UT_TARGET})
+    add_executable(${UT_TARGET} tests/${UT_DIR}/${UT_TARGET}.cpp)
+  endif()
 
   target_link_libraries(${UT_TARGET} PRIVATE Halide::Halide)
 
@@ -106,19 +109,27 @@ function(build_experiment_test)
     set(UT_SCHEDULES "0" "1" "2" "3")
   endif()
 
-  add_custom_command(
-    OUTPUT ${UT_TARGET}_front.pvl
-    COMMAND ./${UT_TARGET} ${UT_TARGET}_front front
-    DEPENDS ${UT_TARGET}
-    VERBATIM
-  )
+  if(NOT TARGET ${UT_TARGET}_pvl)
+    add_custom_command(
+      OUTPUT ${UT_TARGET}_front.pvl
+      COMMAND ./${UT_TARGET} ${UT_TARGET}_front front
+      DEPENDS ${UT_TARGET}
+      VERBATIM
+    )
+    if(NOT ${UT_NO_TEST})
+      add_test(NAME ${UT_TARGET}_front.pvl
+        COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}_front.pvl
+      )
+      set_tests_properties(${UT_TARGET}_front.pvl PROPERTIES
+        LABELS experiment:${UT_DIR}:front:${UT_LABELS}
+      )
+    endif()
 
-  add_test(NAME ${UT_TARGET}_front.pvl
-    COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}_front.pvl
-  )
-  set_tests_properties(${UT_TARGET}_front.pvl PROPERTIES
-    LABELS experiment:${UT_DIR}:front:${UT_LABELS}
-  )
+    add_custom_target(
+      ${UT_TARGET}_pvl ALL
+      DEPENDS ${UT_TARGET}_front.pvl
+    )
+  endif()
 
   foreach(V IN LISTS UT_SCHEDULES)
     add_custom_command(
@@ -127,13 +138,14 @@ function(build_experiment_test)
       DEPENDS ${UT_TARGET}
       VERBATIM
     )
-
-    add_test(NAME ${UT_TARGET}_${V}.c
-      COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}_${V}.c
-    )
-    set_tests_properties(${UT_TARGET}_${V}.c PROPERTIES
-      LABELS experiment:${UT_DIR}:back:${UT_LABELS}
-    )
+    if(NOT ${UT_NO_TEST})
+      add_test(NAME ${UT_TARGET}_${V}.c
+        COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}_${V}.c
+      )
+      set_tests_properties(${UT_TARGET}_${V}.c PROPERTIES
+        LABELS experiment:${UT_DIR}:back:${UT_LABELS}
+      )
+    endif()
 
   endforeach()
 
@@ -145,27 +157,21 @@ function(build_experiment_test)
       VERBATIM
     )
 
-    add_test(NAME ${UT_TARGET}_${V}_mem.c
-      COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}_${V}_mem.c
-    )
-    set_tests_properties(${UT_TARGET}_${V}_mem.c PROPERTIES
-      LABELS experiment:${UT_DIR}:back:${UT_LABELS}:mem
+    if(NOT ${UT_NO_TEST})
+      add_test(NAME ${UT_TARGET}_${V}_mem.c
+        COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}_${V}_mem.c
+      )
+      set_tests_properties(${UT_TARGET}_${V}_mem.c PROPERTIES
+        LABELS experiment:${UT_DIR}:back:${UT_LABELS}:mem
+      )
+    endif()
+
+    add_custom_target(
+      ${UT_TARGET}_${V} ALL
+      DEPENDS ${UT_TARGET}_${V}.c ${UT_TARGET}_${V}_mem.c
     )
 
   endforeach()
-
-
-  add_custom_target(
-    ${UT_TARGET}_pvl ALL
-    DEPENDS ${UT_TARGET}_front.pvl ${UT_TARGET}_0.c
-    ${UT_TARGET}_1.c ${UT_TARGET}_2.c ${UT_TARGET}_3.c
-  )
-
-  add_custom_target(
-    ${UT_TARGET}_pvl_mem ALL
-    DEPENDS ${UT_TARGET}_0_mem.c
-    ${UT_TARGET}_1_mem.c ${UT_TARGET}_2_mem.c ${UT_TARGET}_3_mem.c
-  )
 endfunction()
 
 function(build_single_experiment_test)
@@ -269,7 +275,7 @@ build_unit_test(TARGET reorder DIR reorder)
 # Known limitations
 build_unit_test(TARGET pure_func_no_bounds DIR limitations ONLY_MEM)
 build_unit_test(TARGET pure_func_no_bounds_xyz DIR limitations ONLY_MEM)
-# build_unit_test(TARGET pure_func_no_bounds_yzx DIR limitations ONLY_MEM)
+build_unit_test(TARGET pure_func_no_bounds_yzx DIR limitations ONLY_MEM)
 
 # Experiments: involved Halide programs
 build_experiment_test(TARGET blur DIR experiment)
@@ -278,7 +284,7 @@ build_experiment_test(TARGET conv_layer DIR experiment)
 build_experiment_test(TARGET auto_viz DIR experiment)
 
 build_experiment_test(TARGET gemm DIR experiment SCHEDULES 0 1 2 )
-# build_experiment_test(TARGET gemm DIR experiment SCHEDULES 3)
+build_experiment_test(TARGET gemm DIR experiment SCHEDULES 3 NO_TEST)
 
 # build_single_experiment_test(TARGET bgu DIR bgu)
 build_single_experiment_test(TARGET bilateral_grid DIR experiment)
