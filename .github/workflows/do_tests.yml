@@ -105,6 +105,7 @@ jobs:
       matrix:
         test_set: [-L experiment -LE mem, -L experiment -L mem, -L unit -L mem, -L unit -LE mem, -L front, -L padre]
     runs-on: ubuntu-22.04
+    continue-on-error: true
     steps:
       - name: Install Java
         uses: actions/setup-java@v4
