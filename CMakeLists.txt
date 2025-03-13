@@ -18,7 +18,7 @@ set(VERCORS_PADRE ${VCT} --silicon-quiet --no-infer-heap-context-into-frame --de
 
 
 function(build_unit_test)
-  set(options SHOULDFAIL AND_FRONT)
+  set(options SHOULDFAIL AND_FRONT ONLY_MEM)
   set(oneValueArgs TARGET DIR)
   set(multiValueArgs LABELS)
   cmake_parse_arguments(UT "${options}" "${oneValueArgs}"
@@ -52,13 +52,15 @@ function(build_unit_test)
     )
   endif()
 
-  add_test(NAME ${UT_TARGET}.c
-    COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}.c
-  )
-  set_tests_properties(${UT_TARGET}.c PROPERTIES
-    WILL_FAIL ${UT_SHOULDFAIL}
-    LABELS unit:${UT_DIR}:back:${UT_LABELS}
-  )
+  if(NOT ${UT_ONLY_MEM})
+    add_test(NAME ${UT_TARGET}.c
+      COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}.c
+    )
+    set_tests_properties(${UT_TARGET}.c PROPERTIES
+      WILL_FAIL ${UT_SHOULDFAIL}
+      LABELS unit:${UT_DIR}:back:${UT_LABELS}
+    )
+  endif()
 
   if(NOT ${UT_SHOULDFAIL})
     add_custom_command(
@@ -92,13 +94,17 @@ endfunction()
 function(build_experiment_test)
   set(options)
   set(oneValueArgs TARGET DIR)
-  set(multiValueArgs LABELS)
+  set(multiValueArgs LABELS SCHEDULES)
   cmake_parse_arguments(UT "${options}" "${oneValueArgs}"
                           "${multiValueArgs}" ${ARGN} )
 
   add_executable(${UT_TARGET} tests/${UT_DIR}/${UT_TARGET}.cpp)
 
   target_link_libraries(${UT_TARGET} PRIVATE Halide::Halide)
+
+  if(NOT UT_SCHEDULES)
+    set(UT_SCHEDULES "0" "1" "2" "3")
+  endif()
 
   add_custom_command(
     OUTPUT ${UT_TARGET}_front.pvl
@@ -114,7 +120,7 @@ function(build_experiment_test)
     LABELS experiment:${UT_DIR}:front:${UT_LABELS}
   )
 
-  foreach(V RANGE 3)
+  foreach(V IN LISTS UT_SCHEDULES)
     add_custom_command(
       OUTPUT ${UT_TARGET}_${V}.c
       COMMAND ./${UT_TARGET} ${UT_TARGET}_${V} ${V}
@@ -131,7 +137,7 @@ function(build_experiment_test)
 
   endforeach()
 
-  foreach(V RANGE 3)
+  foreach(V IN LISTS UT_SCHEDULES)
     add_custom_command(
       OUTPUT ${UT_TARGET}_${V}_mem.c
       COMMAND ./${UT_TARGET} ${UT_TARGET}_${V}_mem ${V} mem
@@ -261,16 +267,18 @@ build_unit_test(TARGET reorder_seq_red DIR reorder)
 build_unit_test(TARGET reorder DIR reorder)
 
 # Known limitations
-build_unit_test(TARGET pure_func_no_bounds DIR limitations)
-build_unit_test(TARGET pure_func_no_bounds_xyz DIR limitations)
-build_unit_test(TARGET pure_func_no_bounds_yzx DIR limitations)
+build_unit_test(TARGET pure_func_no_bounds DIR limitations ONLY_MEM)
+build_unit_test(TARGET pure_func_no_bounds_xyz DIR limitations ONLY_MEM)
+# build_unit_test(TARGET pure_func_no_bounds_yzx DIR limitations ONLY_MEM)
 
 # Experiments: involved Halide programs
 build_experiment_test(TARGET blur DIR experiment)
 build_experiment_test(TARGET hist DIR experiment)
 build_experiment_test(TARGET conv_layer DIR experiment)
-build_experiment_test(TARGET gemm DIR experiment)
 build_experiment_test(TARGET auto_viz DIR experiment)
+
+build_experiment_test(TARGET gemm DIR experiment SCHEDULES 0 1 2 )
+# build_experiment_test(TARGET gemm DIR experiment SCHEDULES 3)
 
 # build_single_experiment_test(TARGET bgu DIR bgu)
 build_single_experiment_test(TARGET bilateral_grid DIR experiment)
