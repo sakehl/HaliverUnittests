@@ -2,7 +2,7 @@
 #include "HalideComplex.h"
 #include <math.h>
 #define HAVE_HALIVER
-#define CONCRETE_BOUNDS
+// #define CONCRETE_BOUNDS
 
 using namespace Halide;
 
@@ -490,8 +490,11 @@ public:
                 n_antennas>0 && n_sol>0 && max_n_visibilities>0 && n_cb > 0 &&
                 n_antennas == 50 && n_sol == 8 && max_n_visibilities == 230930 && n_cb == 1
                 );
-                
+#ifdef CONCRETE_BOUNDS
+            result.compile_to_c("PerformIterationHalideCB.c", args, {}, "PerformIterationHalideCB", target);
+#else
             result.compile_to_c("PerformIterationHalide.c", args, {}, "PerformIterationHalide", target);
+#endif
 #else
             // debug_vres_in.compile_to_c("VResIn.cc", args, "VResIn", target);
             // debug_substract_all.compile_to_c("SubstractFull.cc", args, "SubstractFull", target);

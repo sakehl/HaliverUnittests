@@ -205,6 +205,54 @@ function(build_single_experiment_test)
   )
 endfunction()
 
+function(build_padre)
+  set(options CONCRETE_BOUNDS)
+  cmake_parse_arguments(UT "${options}" "${oneValueArgs}"
+                          "${multiValueArgs}" ${ARGN} )
+
+  set(CB "")
+  if(${UT_CONCRETE_BOUNDS})
+    add_definitions(-DCONCRETE_BOUNDS)
+    set(CB "CB")
+  endif()
+
+  add_executable(GenerateHalideDiagonal${CB} tests/padre/GenerateHalideDiagonal.cpp)
+  add_executable(GenerateHalideFull${CB} tests/padre/GenerateHalideFull.cpp)
+  target_link_libraries(GenerateHalideDiagonal${CB} PRIVATE Halide::Halide)
+  target_link_libraries(GenerateHalideFull${CB} PRIVATE Halide::Halide)
+  
+  add_custom_command(
+    OUTPUT SubDirectionHalide${CB}.c SolveDirectionHalide${CB}.c StepHalide${CB}.c
+    COMMAND ./GenerateHalideDiagonal${CB}
+    DEPENDS GenerateHalideDiagonal${CB}
+  )
+  
+  add_custom_target(
+    GenerateHalideDiagonal${CB}_output ALL
+    DEPENDS SubDirectionHalide${CB}.c SolveDirectionHalide${CB}.c StepHalide${CB}.c
+  )
+  
+  add_custom_command(
+    OUTPUT PerformIterationHalide${CB}.c
+    COMMAND ./GenerateHalideFull${CB}
+    DEPENDS GenerateHalideFull${CB}
+  )
+  
+  add_custom_target(GenerateHalideFull${CB}_output ALL
+    DEPENDS PerformIterationHalide${CB}.c
+    GenerateHalideDiagonal${CB}_output
+  )
+  
+  foreach(FILE SubDirectionHalide${CB}.c SolveDirectionHalide${CB}.c StepHalide${CB}.c PerformIterationHalide${CB}.c)
+    add_test(NAME ${FILE}
+      COMMAND ${VERCORS_PADRE} ${CMAKE_BINARY_DIR}/${FILE}
+    )
+    set_tests_properties(${FILE} PROPERTIES
+      LABELS padre:back:${CB}
+      TIMEOUT 3600
+    )
+  endforeach()
+endfunction()
 # Unit tests: simple Halide programs
 build_unit_test(TARGET pure_func DIR alg AND_FRONT)
 build_unit_test(TARGET update DIR alg AND_FRONT)
@@ -293,39 +341,5 @@ build_single_experiment_test(TARGET camera_pipe DIR experiment)
 build_single_experiment_test(TARGET depthwise_separable_conv DIR experiment)
 
 ## Build padre files
-add_executable(GenerateHalideDiagonal tests/padre/GenerateHalideDiagonal.cpp)
-add_executable(GenerateHalideFull tests/padre/GenerateHalideFull.cpp)
-target_link_libraries(GenerateHalideDiagonal PRIVATE Halide::Halide)
-target_link_libraries(GenerateHalideFull PRIVATE Halide::Halide)
-
-add_custom_command(
-  OUTPUT SubDirectionHalide.c SolveDirectionHalide.c StepHalide.c
-  COMMAND ./GenerateHalideDiagonal
-  DEPENDS GenerateHalideDiagonal
-)
-
-add_custom_target(
-  GenerateHalideDiagonal_output ALL
-  DEPENDS SubDirectionHalide.c SolveDirectionHalide.c StepHalide.c
-)
-
-add_custom_command(
-  OUTPUT PerformIterationHalide.c
-  COMMAND ./GenerateHalideFull
-  DEPENDS GenerateHalideFull
-)
-
-add_custom_target(GenerateHalideFull_output ALL
-  DEPENDS PerformIterationHalide.c
-  GenerateHalideDiagonal_output
-)
-
-foreach(FILE SubDirectionHalide.c SolveDirectionHalide.c StepHalide.c PerformIterationHalide.c)
-  add_test(NAME ${FILE}
-    COMMAND ${VERCORS_PADRE} ${CMAKE_BINARY_DIR}/${FILE}
-  )
-  set_tests_properties(${FILE} PROPERTIES
-    LABELS padre:back
-    TIMEOUT 3600
-  )
-endforeach()
+build_padre()
+build_padre(CONCRETE_BOUNDS)

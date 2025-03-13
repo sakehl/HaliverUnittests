@@ -2,7 +2,7 @@
 #include "HalideComplex.h"
 #include <math.h>
 #define HAVE_HALIVER
-#define CONCRETE_BOUNDS
+// #define CONCRETE_BOUNDS
 
 // using dp3::ddecal;
 using namespace Halide;
@@ -492,21 +492,25 @@ public:
                 && n_antennas == 50 && n_solutions == 8 && n_vis == 230930 && n_dir_sol ==3
                 && solution_index0 == 0
                 );
-            
+#ifdef CONCRETE_BOUNDS
+            std::string cb = "CB";
+#else
+            std::string cb = "";
+#endif
             Func solve_out = SolveDirection(v_res0);
-            solve_out.compile_to_c("SolveDirectionHalide.c", args, {bounds}, "SolveDirection", target);
+            solve_out.compile_to_c("SolveDirectionHalide" + cb + ".c", args, {bounds}, "SolveDirection" + cb, target);
             solve_out.print_loop_nest();
 
             Func step_out = Step();
             Annotation step_bounds = context_everywhere(n_antennas>0 && n_vis>0 && n_solutions>0
                 && n_antennas == 50 && n_solutions == 8 && n_vis == 230930 && n_dir_sol ==3);
-            step_out.compile_to_c("StepHalide.c", step_args, {step_bounds}, "StepHalide", target);
+            step_out.compile_to_c("StepHalide" + cb + ".c", step_args, {step_bounds}, "StepHalide" + cb, target);
             
             Func v_sub_out = AddOrSubtractDirection(false, v_res0);
             Func v_sub_out_matrix = matrixToDimensions(v_sub_out, {v});
             v_sub_out_matrix.bound(v, 0, n_vis);
             set_bounds({{0, 2}, {0, 2}, {0, 2}, {0, n_vis}}, v_sub_out_matrix.output_buffer());
-            v_sub_out_matrix.compile_to_c("SubDirectionHalide.c", args, {bounds}, "SubDirection", target);
+            v_sub_out_matrix.compile_to_c("SubDirectionHalide" + cb + ".c", args, {bounds}, "SubDirection"+ cb, target);
 
             // Func idFunc = matrixId(v_res_in);
             // set_bounds({{0, 2}, {0, 2}, {0, 2}, {0, n_vis}}, idFunc.output_buffer());

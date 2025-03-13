@@ -108,7 +108,9 @@ jobs:
           -L unit -L back -L mem,
           -L unit -L back -LE mem,
           -L front,
-          -L padre]
+          -L padre -L CB,
+          -L padre -LE CB
+          ]
     runs-on: ubuntu-22.04
     continue-on-error: true
     steps:
