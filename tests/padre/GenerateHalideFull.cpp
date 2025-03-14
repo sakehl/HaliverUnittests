@@ -487,8 +487,7 @@ public:
             ant.requires((ant(_0, _1, _2) >= 0 && ant(_0, _1, _2) < n_antennas));
             solution_map.requires((solution_map(_0, _1, _2) >= 0 && solution_map(_0, _1, _2) < n_sol));
             Annotation bounds = context_everywhere(
-                n_antennas>0 && n_sol>0 && max_n_visibilities>0 && n_cb > 0 &&
-                n_antennas == 50 && n_sol == 8 && max_n_visibilities == 230930 && n_cb == 1
+                n_antennas>0 && n_sol>0 && max_n_visibilities>0 && n_cb > 0 
                 );
 #ifdef CONCRETE_BOUNDS
             result.compile_to_c("PerformIterationHalideCB.c", args, {}, "PerformIterationHalideCB", target);

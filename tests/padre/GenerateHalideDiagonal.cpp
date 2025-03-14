@@ -489,8 +489,6 @@ public:
             Annotation bounds = context_everywhere(solution_index0 >= 0 && n_dir_sol > 0 
                 && solution_index0 + n_dir_sol < n_solutions
                 && n_antennas>0 && n_vis>0 && n_solutions>0
-                && n_antennas == 50 && n_solutions == 8 && n_vis == 230930 && n_dir_sol ==3
-                && solution_index0 == 0
                 );
 #ifdef CONCRETE_BOUNDS
             std::string cb = "CB";
