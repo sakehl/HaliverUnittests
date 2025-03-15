@@ -458,7 +458,7 @@ public:
         return next_solutions;
     }
 
-    void compile(){
+    void compile(bool non_unique){
         try{
             Target target = get_target_from_environment();
 #ifndef HAVE_HALIVER
@@ -495,20 +495,24 @@ public:
 #else
             std::string cb = "";
 #endif
+            std::string NU = non_unique ? "-non_unique" : "";
+            
             Func solve_out = SolveDirection(v_res0);
-            solve_out.compile_to_c("SolveDirectionHalide" + cb + ".c", args, {bounds}, "SolveDirection" + cb, target);
-            solve_out.print_loop_nest();
+            solve_out.compile_to_c("SolveDirectionHalide" + cb + NU + ".c", args, {bounds},
+                 "SolveDirection" + cb + NU, target, false, non_unique);
 
             Func step_out = Step();
             Annotation step_bounds = context_everywhere(n_antennas>0 && n_vis>0 && n_solutions>0
                 && n_antennas == 50 && n_solutions == 8 && n_vis == 230930 && n_dir_sol ==3);
-            step_out.compile_to_c("StepHalide" + cb + ".c", step_args, {step_bounds}, "StepHalide" + cb, target);
+            step_out.compile_to_c("StepHalide" + cb + NU + ".c", step_args, {step_bounds},
+                 "StepHalide" + cb + NU, target, false, non_unique);
             
             Func v_sub_out = AddOrSubtractDirection(false, v_res0);
             Func v_sub_out_matrix = matrixToDimensions(v_sub_out, {v});
             v_sub_out_matrix.bound(v, 0, n_vis);
             set_bounds({{0, 2}, {0, 2}, {0, 2}, {0, n_vis}}, v_sub_out_matrix.output_buffer());
-            v_sub_out_matrix.compile_to_c("SubDirectionHalide" + cb + ".c", args, {bounds}, "SubDirection"+ cb, target);
+            v_sub_out_matrix.compile_to_c("SubDirectionHalide" + cb + NU + ".c", args, {bounds},
+                "SubDirection"+ cb + NU, target, false, non_unique);
 
             // Func idFunc = matrixId(v_res_in);
             // set_bounds({{0, 2}, {0, 2}, {0, 2}, {0, n_vis}}, idFunc.output_buffer());
@@ -543,5 +547,8 @@ public:
 int main(int argc, char **argv){
 
     HalideDiagionalSolver solver;
-    solver.compile();
+    solver.compile(false);
+
+    HalideDiagionalSolver solver2;
+    solver2.compile(true);
 }

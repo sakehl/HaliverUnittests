@@ -6,9 +6,9 @@ using namespace Halide;
 
 int main(int argc, char *argv[]) {
   int schedule; 
-  bool only_memory, front;
+  bool only_memory, front, non_unique;
   std::string name;
-  int res = read_args(argc, argv, schedule, only_memory, front, name);
+  int res = read_args(argc, argv, schedule, only_memory, front, non_unique, name);
   if(res != 0) return res;
 
   /* Halide algorithm */
@@ -67,6 +67,6 @@ int main(int argc, char *argv[]) {
   if(front) {
     blur_y.translate_to_pvl(name+".pvl", {}, {}); 
   } else {
-    blur_y.compile_to_c(name+".c" , {inp}, {}, name, new_target, only_memory);
+    blur_y.compile_to_c(name+".c" , {inp}, {}, name, new_target, only_memory, non_unique);
   }
 }

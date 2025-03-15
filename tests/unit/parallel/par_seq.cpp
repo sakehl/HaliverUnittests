@@ -42,5 +42,6 @@ int main(int argc, char *argv[]) {
   if(mem_only){
     name += "_mem";
   }
-  out.compile_to_c(name + ".c" , {input}, pipeline_anns, name, new_target, mem_only);
+  out.compile_to_c(name + "-non-unique"+ ".c" , {input}, pipeline_anns, name, new_target, mem_only, false);
+  out.compile_to_c(name + ".c" , {input}, pipeline_anns, name, new_target, mem_only, true);
 }

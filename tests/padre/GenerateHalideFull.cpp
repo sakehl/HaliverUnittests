@@ -448,7 +448,7 @@ public:
         return next_solutions;
     }
 
-    void compile(){
+    void compile(bool non_unique){
         try{
 #ifdef CONCRETE_BOUNDS
             n_cb = 1;
@@ -490,10 +490,14 @@ public:
                 n_antennas>0 && n_sol>0 && max_n_visibilities>0 && n_cb > 0 
                 );
 #ifdef CONCRETE_BOUNDS
-            result.compile_to_c("PerformIterationHalideCB.c", args, {}, "PerformIterationHalideCB", target);
+            std::string cb = "CB";
 #else
-            result.compile_to_c("PerformIterationHalide.c", args, {}, "PerformIterationHalide", target);
+            std::string cb = "";
 #endif
+            std::string NU = non_unique ? "-non_unique" : "";
+            std::string postfix = cb + NU;
+            result.compile_to_c("PerformIterationHalide"+ postfix + ".c", args, {}, 
+                "PerformIterationHalide"+postfix, target, false, non_unique);
 #else
             // debug_vres_in.compile_to_c("VResIn.cc", args, "VResIn", target);
             // debug_substract_all.compile_to_c("SubstractFull.cc", args, "SubstractFull", target);
@@ -518,5 +522,8 @@ public:
 int main(int argc, char **argv){
 
     HalideFullSolver solver;
-    solver.compile();
+    solver.compile(true);
+
+    HalideFullSolver solver2;
+    solver2.compile(false);
 }

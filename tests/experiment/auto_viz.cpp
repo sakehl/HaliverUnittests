@@ -4,12 +4,13 @@
 #include <functional>
 
 using namespace Halide;
+void create_pipeline(std::string name, bool non_unique);
 
 int main(int argc, char *argv[]) {
+    std::string name = argv[1];
     int schedule; 
-    bool only_memory, front;
-    std::string name;
-    int res = read_args(argc, argv, schedule, only_memory, front, name);
+    bool only_memory, front, non_unique;
+    int res = read_args(argc, argv, schedule, only_memory, front, non_unique, name);
     if(res != 0) return res;
 
     int nx = 2048;
@@ -220,6 +221,6 @@ int main(int argc, char *argv[]) {
     if(front) {
         output.translate_to_pvl(name + ".pvl", {}, {});
     } else {
-        output.compile_to_c(name + ".c" , {input}, {}, name, target, only_memory);
+        output.compile_to_c(name + ".c" , {input}, {}, name, target, only_memory, non_unique);
     }
 }

@@ -37,5 +37,6 @@ int main(int argc, char *argv[]) {
     name += "_mem";
   }
   out.translate_to_pvl(name +"_front.pvl", {}, pipeline_anns); 
-  out.compile_to_c(name + ".c" , {nx, ny, nz, minx, miny, minz}, pipeline_anns, name, new_target, mem_only);
+  out.compile_to_c(name + "-non-unique"+ ".c" , {nx, ny, nz, minx, miny, minz}, pipeline_anns, name, new_target, mem_only, false);
+  out.compile_to_c(name + ".c" , {nx, ny, nz, minx, miny, minz}, pipeline_anns, name, new_target, mem_only, true);
 }

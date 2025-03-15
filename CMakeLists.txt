@@ -134,7 +134,7 @@ function(build_experiment_test)
   foreach(V IN LISTS UT_SCHEDULES)
     add_custom_command(
       OUTPUT ${UT_TARGET}_${V}.c
-      COMMAND ./${UT_TARGET} ${UT_TARGET}_${V} ${V}
+      COMMAND ./${UT_TARGET} ${UT_TARGET}_${V} schedule ${V}
       DEPENDS ${UT_TARGET}
       VERBATIM
     )
@@ -152,7 +152,7 @@ function(build_experiment_test)
   foreach(V IN LISTS UT_SCHEDULES)
     add_custom_command(
       OUTPUT ${UT_TARGET}_${V}_mem.c
-      COMMAND ./${UT_TARGET} ${UT_TARGET}_${V}_mem ${V} mem
+      COMMAND ./${UT_TARGET} ${UT_TARGET}_${V}_mem schedule ${V} mem
       DEPENDS ${UT_TARGET}
       VERBATIM
     )

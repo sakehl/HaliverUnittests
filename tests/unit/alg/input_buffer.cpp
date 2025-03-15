@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
 
   out(x, y) = input(y, x) + 1;
   out.ensures(out(x,y) == input(y, x) + 1);
-  out.ensures(out(x,y) > 0);
+  out.ensures(out(x,y) > 0); 
 
   int nx = 100, ny = 42;
   input.dim(0).set_bounds(0, ny);
@@ -43,5 +43,6 @@ int main(int argc, char *argv[]) {
     name += "_mem";
   }
   out.translate_to_pvl(name +"_front.pvl", {input}, pipeline_anns); 
-  out.compile_to_c(name + ".c" , {input}, pipeline_anns, name, new_target, mem_only);
+  out.compile_to_c(name + "-non_unique" + ".c" , {input}, pipeline_anns, name, new_target, mem_only, false);
+  out.compile_to_c(name + ".c" , {input}, pipeline_anns, name, new_target, mem_only, true);
 }

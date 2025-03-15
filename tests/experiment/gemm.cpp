@@ -6,9 +6,9 @@ using namespace Halide;
 
 int main(int argc, char *argv[]) {
   int schedule; 
-  bool only_memory, front;
+  bool only_memory, front, non_unique;
   std::string name;
-  int res = read_args(argc, argv, schedule, only_memory, front, name);
+  int res = read_args(argc, argv, schedule, only_memory, front, non_unique, name);
   if(res != 0) return res;
 
   const int num_rows = 2048;
@@ -164,6 +164,6 @@ int main(int argc, char *argv[]) {
   if(front) {
       result_.translate_to_pvl(name + ".pvl", {}, {}); 
   } else {
-      result_.compile_to_c(name + ".c" , {A_, B_, C_}, {}, name, new_target, only_memory);
+      result_.compile_to_c(name + ".c" , {A_, B_, C_}, {}, name, new_target, only_memory, non_unique);
   }
 }

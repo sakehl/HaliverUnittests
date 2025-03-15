@@ -15,3 +15,8 @@ ctest --test-dir build -D Experimental -L experiment -L mem
 
 It will upload towards `https://my.cdash.org/overview.php?project=HaliVer`
 
+
+
+TODO:
+reduction_bug.cpp
+And reduction_rfactor.cpp: When annotations are on

@@ -4,8 +4,15 @@
 
 using namespace Halide;
 
+void create_pipeline(std::string name, bool non_unique);
+
 int main(int argc, char *argv[]) {
     std::string name = argv[1];
+    create_pipeline(name, false);
+    create_pipeline(name+"-non_unique", true);
+}
+
+void create_pipeline(std::string name, bool non_unique){
     /* Halide algorithm */
     ImageParam input(type_of<float>(), 2, "input");
 
@@ -115,7 +122,6 @@ int main(int argc, char *argv[]) {
     blury.bound(z, 0, 12);
 
     Target new_target = standard_target();
-    bilateral_grid.compile_to_c(name + ".c", {input}, {}, name, new_target, true);
-
+    bilateral_grid.compile_to_c(name + ".c", {input}, {}, name, new_target, true, non_unique);
 }
 

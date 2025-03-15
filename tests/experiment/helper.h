@@ -2,35 +2,41 @@
 #include <vector>
 #include <string>
 
-int read_args(int argc, char** argv, int& schedule, bool& only_memory, bool& front, std::string& name){
+int read_args(int argc, char** argv, int& schedule, bool& only_memory, bool& front, bool& non_unique, std::string& name){
     only_memory = false;
+    front = false;
+    non_unique = false;
     std::string front_s = "front";
     std::string only_memory_s = "mem";
-    front = false;
+    std::string non_unique_s = "-non_unique";
+    std::string schedule_s = "schedule";
+    
     if(argc == 1){
         printf("Need output name\n");
         return 1;
     }
     name = argv[1];
+    bool prev_was_schedule=false;
+    schedule = 0;
 
-    if(argc == 2){
-        schedule = 0;
-    } else if(argc == 3 || argc == 4){
-    if(front_s.compare(argv[2]) == 0){
-        front = true;
-    } else {
-        schedule = std::stoi(argv[2]);
-    }
-    if(argc == 4) {
-        if(only_memory_s.compare(argv[3]) == 0){
+    for(int i = 2; i < argc; i++){
+        if(prev_was_schedule) {
+            schedule = std::stoi(argv[i]);
+            prev_was_schedule = false;
+        } else if(schedule_s.compare(argv[i]) == 0){
+            prev_was_schedule = true;
+        } else if(front_s.compare(argv[i]) == 0){
+            front = true;
+        } else if(only_memory_s.compare(argv[i]) == 0){
             only_memory = true;
+        } else if(non_unique_s.compare(argv[i]) == 0){
+            non_unique = true;
         } else {
             printf("Invallid argument\n");
             return 1;
         }
     }
-    }
-    if((argc > 4 || schedule < 0 || schedule >3) && !front){
+    if(prev_was_schedule || (front && schedule != 0) || (!front && !(0 <= schedule && schedule <= 3))){
         printf("Invallid argument\n");
         return 1;
     }

@@ -336,8 +336,15 @@ Func sharpen(Func input) {
     return sharpened;
 }
 
+void create_pipeline(std::string name, bool non_unique);
+
 int main(int argc, char *argv[]) {
     std::string name = argv[1];
+    create_pipeline(name, false);
+    create_pipeline(name+"-non_unique", true);
+}
+
+void create_pipeline(std::string name, bool non_unique){
     ImageParam input(type_of<uint16_t>(), 2, "input");
     ImageParam matrix_3200(type_of<float>(), 2, "matrix_3200");
     ImageParam matrix_7000(type_of<float>(), 2, "matrix_7000");
@@ -450,8 +457,8 @@ int main(int argc, char *argv[]) {
     /* End Schedule */
 
     Target new_target = standard_target();
-    processed.compile_to_c(name + ".c", {input, matrix_3200, matrix_7000}, {}, name, new_target, true);
+    processed.compile_to_c(name + ".c", {input, matrix_3200, matrix_7000}, {}, name, new_target, true, non_unique);
     processed.compile_to_pvl(name + ".pvl", {input, matrix_3200, matrix_7000}, {}, name, new_target, true);
 
-    return 0;
+    return;
 };

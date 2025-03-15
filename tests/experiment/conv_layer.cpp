@@ -6,9 +6,9 @@ using namespace Halide;
 
 int main(int argc, char *argv[]) {
   int schedule; 
-  bool only_memory, front;
+  bool only_memory, front, non_unique;
   std::string name;
-  int res = read_args(argc, argv, schedule, only_memory, front, name);
+  int res = read_args(argc, argv, schedule, only_memory, front, non_unique, name);
   if(res != 0) return res;
 
   /* Halide algorithm */
@@ -92,6 +92,6 @@ int main(int argc, char *argv[]) {
   if(front) {
     relu.translate_to_pvl(name + ".pvl", {}, {}); 
   } else {
-    relu.compile_to_c(name + ".c" , {input, filter, bias}, {}, name, new_target, only_memory);
+    relu.compile_to_c(name + ".c" , {input, filter, bias}, {}, name, new_target, only_memory, non_unique);
   }
 }
