@@ -367,6 +367,37 @@ build_single_experiment_test(TARGET depthwise_separable_conv DIR experiment)
 build_padre()
 build_padre(CONCRETE_BOUNDS)
 
+# Tutorial
+function(build_lesson)
+  set(options)
+  set(oneValueArgs TARGET DIR)
+  set(multiValueArgs)
+  cmake_parse_arguments(UT "${options}" "${oneValueArgs}"
+                          "${multiValueArgs}" ${ARGN} )
+
+  add_executable(${UT_TARGET} ${UT_DIR}/${UT_TARGET}.cpp)
+
+  target_link_libraries(${UT_TARGET} PRIVATE Halide::Halide)
+
+  add_custom_command(
+    OUTPUT ${UT_TARGET}_all_files
+    COMMAND ./${UT_TARGET}
+    DEPENDS ${UT_TARGET}
+    VERBATIM
+  )
+
+  add_custom_target(
+    ${UT_TARGET}_all ALL
+    DEPENDS ${UT_TARGET}_all_files
+  )
+endfunction()
+
+
+build_lesson(TARGET lesson1 DIR tutorial)
+build_lesson(TARGET lesson2 DIR tutorial)
+build_lesson(TARGET lesson3 DIR tutorial)
+
+
 # add_executable(haliver tests/haliver.cpp)
 
 # target_link_libraries(haliver PRIVATE Halide::Halide)

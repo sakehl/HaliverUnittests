@@ -1,0 +1,106 @@
+
+/* Altered as an example how we verify code when sequences were present */
+
+ decreases;
+pure int max(int x, int y) = x > y ? x : y;
+ 
+ decreases;
+pure int min(int x, int y) = x > y ? y : x;
+ 
+ decreases;
+pure rational max(rational x, rational y) = x > y ? x : y;
+ 
+ decreases;
+pure rational min(rational x, rational y) = x > y ? y : x;
+ 
+ decreases;
+pure int abs(int x) = x >= 0 ? x : -x;
+
+ decreases;
+pure rational abs(rational x) = x >= 0 ? x : -x;
+ 
+ decreases;
+pure rational ceil_f32(rational x) = is_int(x) ? x : int_to_rational(rational_to_int(x) + 1);
+
+prover_function int rational_to_int(rational r) \smtlib `(_ to_int)`;
+
+prover_function int int_to_rational(int i) \smtlib `(_ to_real)`;
+ 
+prover_function bool is_int(rational r) \smtlib `(_ is_int)`;
+ 
+prover_function rational div_rat_(rational l, rational r) \smtlib `(_ /)`;
+ 
+prover_function rational pow_f32(rational l, rational r) \smtlib `(_ ^)`;
+ 
+ decreases;
+pure rational div_rat(rational l, rational r) = div_rat_(l, r);
+ 
+ decreases;
+pure rational fast_inverse_f32(rational x) = div_rat(1.0f, x);
+ 
+ decreases;
+pure int round_f32(rational x) = is_int(x) ? rational_to_int(x) : rational_to_int(x + 0.5f);
+
+ decreases;
+pure int hdiv(int a, int b) = b==0 ? 0 : a/b;
+
+ decreases;
+pure int hmod(int a, int b) = b==0 ? 0 : a%b;
+
+ decreases;
+pure int inp_min_0() = 0;
+ decreases;
+pure int inp_min_1() = 0;
+ decreases;
+pure int inp_extent_0() = 42;
+ decreases;
+pure int inp_extent_1() = 10;
+ decreases;
+pure int inp_stride_0() = 1;
+ decreases;
+pure int inp_stride_1() = 42;
+
+//  ensures ((x0 > x1) ? (\result > 0) : (\result <= 0));
+ decreases;
+pure int inp(int x0, int x1);
+
+ decreases;
+pure int count_min_0() = 0;
+ decreases;
+pure int count_extent_0() = 42;
+ decreases;
+pure int count_stride_0() = 1;
+
+ ensures \result == 0;
+ decreases;
+pure int count0(int x) = 0;
+
+ ensures (0 <= \result) && (\result <= 10);
+//  ensures \result == min(max(x, 0), 10);
+ ensures (\result == count_row(inp_to_row(x, 10)));
+ decreases;
+pure int count(int x) = countr(x, 0 + 10);
+
+ requires 0 <= r6__x && r6__x <= 0 + 10;
+ ensures ((0 <= \result) && (\result <= r6__x));
+//  ensures (\result == min(max(x, 0), r6__x));
+ ensures (\result == count_row(inp_to_row(x, r6__x)));
+ decreases r6__x;
+pure int countr(int x, int r6__x) = r6__x == 0 ? count0(x) : ((inp_im(x, (r6__x - 1)) > 0) ? (countr(x, r6__x - 1) + 1) : countr(x, r6__x - 1));
+
+ decreases;
+pure int inp_im(int x0, int x1) = inp(x0, x1);
+
+  requires n >= 0;
+  ensures |\result| == n;
+  ensures (\forall int i; 0 <= i && i < n; {:\result[i]:} == inp(x, i));
+  decreases n;
+pure seq<int> inp_to_row(int x, int n) = n == 0 ? [t: int ] : inp_to_row(x, n-1) + [inp(x, n-1)];
+
+  decreases |xs|;
+  ensures |xs| > 0 ==> \result == (xs[0] > 0 ? 1 : 0) + count_row(xs[1..]);
+pure int count_row(seq<int> xs) = |xs|==0 ? 0 : (xs[0] > 0 ? 1 : 0) + count_row(xs[1..]);
+
+ ensures (\forall int x; true && ((0 <= 0) && (0 < (0 + 42))); (0 <= {:count(x):}) && (count(x) <= 10));
+ ensures (\forall int x; true && ((0 <= 0) && (0 < (0 + 42))); {:count(x):} == count_row(inp_to_row(x, 10)));
+void pipeline(){ }

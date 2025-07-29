@@ -38,7 +38,7 @@ void create_pipeline(std::string name, int schedule, bool front, bool only_memor
         kernel_sum_x("kernel_sum_x"), kernel_sum_y("kernel_sum_y");
     Func output("output");
 
-    input.requires(trigger(input(_)) >= 0.0f);
+    input.requires(input(_) >= 0.0f);
     clamped = Halide::BoundaryConditions::repeat_edge(input);
     // Handle different types by just casting to float
     as_float(x, y, c) = cast<float>(clamped(x, y, c));
@@ -78,12 +78,12 @@ void create_pipeline(std::string name, int schedule, bool front, bool only_memor
     };
 
     std::function<Expr(Expr)> biggerThanOne = [r](Expr f) -> Expr {
-        return implies(r==0, f == 0.0f) && implies(r==1, f >= 1.0f) && implies(r>0, f >= 1.0f);
+        return implies(r > 0, f >= 1.0f);
     };
 
-    kernel_sum_x(x) = sum(unnormalized_kernel_x(x, r), "kernel_sum_x", {biggerThanOne});
+    kernel_sum_x(x) = sum(unnormalized_kernel_x(x, r), "kernel_sum_x", {biggerThanZero, biggerThanOne});
     kernel_sum_x.ensures(kernel_sum_x(x) >= 1.0f);
-    kernel_sum_y(y) = sum(unnormalized_kernel_y(y, r), "kernel_sum_y", {biggerThanOne});
+    kernel_sum_y(y) = sum(unnormalized_kernel_y(y, r), "kernel_sum_y", {biggerThanZero, biggerThanOne});
     kernel_sum_y.ensures(kernel_sum_y(y) >= 1.0f);
 
     kernel_x(x, k) = unnormalized_kernel_x(x, k) / kernel_sum_x(x);
