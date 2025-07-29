@@ -25,7 +25,11 @@ int main(int argc, char *argv[]) {
     .with_feature(Target::NoBoundsQuery)
     ;
   
-  std::vector<Annotation> pipeline_anns;
+  std::vector<Annotation> pipeline_anns = {
+    context(nx > 0),
+    context(ny > 0),
+    context(nz > 0)
+  };
 
   std::string name = argv[1];
   std::string mem_only_s = "";
