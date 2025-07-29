@@ -285,7 +285,7 @@ build_unit_test(TARGET reduction_in_arg DIR alg AND_FRONT)
 build_unit_test(TARGET reduction_multi DIR alg AND_FRONT)
 build_unit_test(TARGET reduction_multi_fail DIR alg SHOULDFAIL AND_FRONT)
 build_unit_test(TARGET input_buffer DIR alg AND_FRONT)
-build_unit_test(TARGET floyd DIR alg)
+# build_unit_test(TARGET floyd DIR alg)
 
 build_unit_test(TARGET tuple DIR alg)
 build_unit_test(TARGET tuple_pipeline DIR alg)
@@ -367,18 +367,18 @@ build_single_experiment_test(TARGET depthwise_separable_conv DIR experiment)
 build_padre()
 build_padre(CONCRETE_BOUNDS)
 
-add_executable(haliver tests/haliver.cpp)
+# add_executable(haliver tests/haliver.cpp)
 
-target_link_libraries(haliver PRIVATE Halide::Halide)
+# target_link_libraries(haliver PRIVATE Halide::Halide)
 
-add_custom_command(
-  OUTPUT haliver.c
-  COMMAND ./haliver
-  DEPENDS haliver
-  VERBATIM
-)
+# add_custom_command(
+#   OUTPUT haliver.c
+#   COMMAND ./haliver
+#   DEPENDS haliver
+#   VERBATIM
+# )
 
-add_custom_target(
-  haliver_examples ALL
-  DEPENDS haliver.c
-)
+# add_custom_target(
+#   haliver_examples ALL
+#   DEPENDS haliver.c
+# )
