@@ -4,12 +4,19 @@
 
 using namespace Halide;
 
+void create_pipeline(std::string name, int schedule, bool front, bool only_memory, bool non_unique);
+
 int main(int argc, char *argv[]) {
   int schedule; 
   bool only_memory, front, non_unique;
   std::string name;
   int res = read_args(argc, argv, schedule, only_memory, front, non_unique, name);
   if(res != 0) return res;
+
+  create_pipeline(name, schedule, front, only_memory, non_unique);
+}
+
+void create_pipeline(std::string name, int schedule, bool front, bool only_memory, bool non_unique){
 
   /* Halide algorithm */
   ImageParam inp(type_of<int>(), 2, "inp"); 
@@ -67,6 +74,6 @@ int main(int argc, char *argv[]) {
   if(front) {
     blur_y.translate_to_pvl(name+".pvl", {}, {}); 
   } else {
-    blur_y.compile_to_c(name+".c" , {inp}, {}, name, new_target, only_memory, non_unique);
+    blur_y.compile_to_c(name+".c" , {inp}, {}, name, new_target, only_memory, !non_unique);
   }
 }

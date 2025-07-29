@@ -4,7 +4,7 @@
 
 using namespace Halide;
 using namespace Halide::ConciseCasts;
-
+void create_pipeline(std::string name, int schedule, bool front, bool only_memory, bool non_unique);
 
 int main(int argc, char *argv[]) {
     int schedule; 
@@ -13,6 +13,10 @@ int main(int argc, char *argv[]) {
     int res = read_args(argc, argv, schedule, only_memory, front, non_unique, name);
     if(res != 0) return res;
 
+    create_pipeline(name, schedule, front, only_memory, non_unique);
+}
+
+void create_pipeline(std::string name, int schedule, bool front, bool only_memory, bool non_unique){
     /* Halide algorithm */
     int nx = 1536;
     int ny = 2560;
@@ -185,6 +189,6 @@ int main(int argc, char *argv[]) {
     if(front) {
         output.translate_to_pvl(name + ".pvl", {}, {});
     } else {
-        output.compile_to_c(name + ".c" , {input}, {}, name, new_target, only_memory, non_unique);
+        output.compile_to_c(name + ".c" , {input}, {}, name, new_target, only_memory, !non_unique);
     }
 }

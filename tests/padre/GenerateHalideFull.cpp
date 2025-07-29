@@ -494,10 +494,10 @@ public:
 #else
             std::string cb = "";
 #endif
-            std::string NU = non_unique ? "-non_unique" : "";
+            std::string NU = non_unique ? "_non_unique" : "";
             std::string postfix = cb + NU;
             result.compile_to_c("PerformIterationHalide"+ postfix + ".c", args, {}, 
-                "PerformIterationHalide"+postfix, target, false, non_unique);
+                "PerformIterationHalide"+postfix, target, false, !non_unique);
 #else
             // debug_vres_in.compile_to_c("VResIn.cc", args, "VResIn", target);
             // debug_substract_all.compile_to_c("SubstractFull.cc", args, "SubstractFull", target);

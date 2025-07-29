@@ -4,14 +4,19 @@
 #include <functional>
 
 using namespace Halide;
-void create_pipeline(std::string name, bool non_unique);
+void create_pipeline(std::string name, int schedule, bool front, bool only_memory, bool non_unique);
 
 int main(int argc, char *argv[]) {
-    std::string name = argv[1];
     int schedule; 
     bool only_memory, front, non_unique;
+    std::string name;
     int res = read_args(argc, argv, schedule, only_memory, front, non_unique, name);
     if(res != 0) return res;
+
+    create_pipeline(name, schedule, front, only_memory, non_unique);
+}
+
+void create_pipeline(std::string name, int schedule, bool front, bool only_memory, bool non_unique){
 
     int nx = 2048;
     int ny = 1024;
@@ -33,7 +38,7 @@ int main(int argc, char *argv[]) {
         kernel_sum_x("kernel_sum_x"), kernel_sum_y("kernel_sum_y");
     Func output("output");
 
-    input.requires(input(_) >= 0.0f);
+    input.requires(trigger(input(_)) >= 0.0f);
     clamped = Halide::BoundaryConditions::repeat_edge(input);
     // Handle different types by just casting to float
     as_float(x, y, c) = cast<float>(clamped(x, y, c));
@@ -73,12 +78,12 @@ int main(int argc, char *argv[]) {
     };
 
     std::function<Expr(Expr)> biggerThanOne = [r](Expr f) -> Expr {
-        return implies(r>0, f >= 1.0f);
+        return implies(r==0, f == 0.0f) && implies(r==1, f >= 1.0f) && implies(r>0, f >= 1.0f);
     };
 
-    kernel_sum_x(x) = sum(unnormalized_kernel_x(x, r), "kernel_sum_x", {biggerThanZero, biggerThanOne});
+    kernel_sum_x(x) = sum(unnormalized_kernel_x(x, r), "kernel_sum_x", {biggerThanOne});
     kernel_sum_x.ensures(kernel_sum_x(x) >= 1.0f);
-    kernel_sum_y(y) = sum(unnormalized_kernel_y(y, r), "kernel_sum_y", {biggerThanZero, biggerThanOne});
+    kernel_sum_y(y) = sum(unnormalized_kernel_y(y, r), "kernel_sum_y", {biggerThanOne});
     kernel_sum_y.ensures(kernel_sum_y(y) >= 1.0f);
 
     kernel_x(x, k) = unnormalized_kernel_x(x, k) / kernel_sum_x(x);
@@ -221,6 +226,6 @@ int main(int argc, char *argv[]) {
     if(front) {
         output.translate_to_pvl(name + ".pvl", {}, {});
     } else {
-        output.compile_to_c(name + ".c" , {input}, {}, name, target, only_memory, non_unique);
+        output.compile_to_c(name + ".c" , {input}, {}, name, target, only_memory, !non_unique);
     }
 }

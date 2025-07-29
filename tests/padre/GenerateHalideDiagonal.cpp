@@ -495,24 +495,24 @@ public:
 #else
             std::string cb = "";
 #endif
-            std::string NU = non_unique ? "-non_unique" : "";
+            std::string NU = non_unique ? "_non_unique" : "";
             
             Func solve_out = SolveDirection(v_res0);
             solve_out.compile_to_c("SolveDirectionHalide" + cb + NU + ".c", args, {bounds},
-                 "SolveDirection" + cb + NU, target, false, non_unique);
+                 "SolveDirection" + cb + NU, target, false, !non_unique);
 
             Func step_out = Step();
             Annotation step_bounds = context_everywhere(n_antennas>0 && n_vis>0 && n_solutions>0
                 && n_antennas == 50 && n_solutions == 8 && n_vis == 230930 && n_dir_sol ==3);
             step_out.compile_to_c("StepHalide" + cb + NU + ".c", step_args, {step_bounds},
-                 "StepHalide" + cb + NU, target, false, non_unique);
+                 "StepHalide" + cb + NU, target, false, !non_unique);
             
             Func v_sub_out = AddOrSubtractDirection(false, v_res0);
             Func v_sub_out_matrix = matrixToDimensions(v_sub_out, {v});
             v_sub_out_matrix.bound(v, 0, n_vis);
             set_bounds({{0, 2}, {0, 2}, {0, 2}, {0, n_vis}}, v_sub_out_matrix.output_buffer());
             v_sub_out_matrix.compile_to_c("SubDirectionHalide" + cb + NU + ".c", args, {bounds},
-                "SubDirection"+ cb + NU, target, false, non_unique);
+                "SubDirection"+ cb + NU, target, false, !non_unique);
 
             // Func idFunc = matrixId(v_res_in);
             // set_bounds({{0, 2}, {0, 2}, {0, 2}, {0, n_vis}}, idFunc.output_buffer());

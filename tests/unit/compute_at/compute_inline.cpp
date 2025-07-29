@@ -40,6 +40,6 @@ int main(int argc, char *argv[]) {
   if(mem_only){
     name += "_mem";
   }
-  out.compile_to_c(name + "-non-unique"+ ".c", {}, pipeline_anns, name, new_target, mem_only, false);
+  out.compile_to_c(name + "_non_unique"+ ".c", {}, pipeline_anns, name, new_target, mem_only, false);
   out.compile_to_c(name + ".c", {}, pipeline_anns, name, new_target, mem_only, true);
 }

@@ -60,9 +60,8 @@ function(build_unit_test)
       WILL_FAIL ${UT_SHOULDFAIL}
       LABELS unit:${UT_DIR}:back:${UT_LABELS}
     )
-  endif()
 
-  if(NOT ${UT_SHOULDFAIL})
+  else()
     add_custom_command(
       OUTPUT ${UT_TARGET}_mem.c
       COMMAND ./${UT_TARGET} ${UT_TARGET} -mem_only
@@ -83,6 +82,10 @@ function(build_unit_test)
       ${UT_TARGET}_all_mem ALL
       DEPENDS ${UT_TARGET}_mem.c
     )
+  endif()
+
+  if(NOT ${UT_SHOULDFAIL})
+    
   endif()
 
   add_custom_target(
@@ -138,6 +141,14 @@ function(build_experiment_test)
       DEPENDS ${UT_TARGET}
       VERBATIM
     )
+
+    add_custom_command(
+      OUTPUT ${UT_TARGET}_${V}_non_unique.c
+      COMMAND ./${UT_TARGET} ${UT_TARGET}_${V}_non_unique schedule ${V} non_unique
+      DEPENDS ${UT_TARGET}
+      VERBATIM
+    )
+
     if(NOT ${UT_NO_TEST})
       add_test(NAME ${UT_TARGET}_${V}.c
         COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}_${V}.c
@@ -157,6 +168,13 @@ function(build_experiment_test)
       VERBATIM
     )
 
+    add_custom_command(
+      OUTPUT ${UT_TARGET}_${V}_mem_non_unique.c
+      COMMAND ./${UT_TARGET} ${UT_TARGET}_${V}_mem_non_unique schedule ${V} mem non_unique
+      DEPENDS ${UT_TARGET}
+      VERBATIM
+    )
+
     if(NOT ${UT_NO_TEST})
       add_test(NAME ${UT_TARGET}_${V}_mem.c
         COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}_${V}_mem.c
@@ -169,6 +187,7 @@ function(build_experiment_test)
     add_custom_target(
       ${UT_TARGET}_${V} ALL
       DEPENDS ${UT_TARGET}_${V}.c ${UT_TARGET}_${V}_mem.c
+        ${UT_TARGET}_${V}_non_unique.c ${UT_TARGET}_${V}_mem_non_unique.c
     )
 
   endforeach()
@@ -266,6 +285,7 @@ build_unit_test(TARGET reduction_in_arg DIR alg AND_FRONT)
 build_unit_test(TARGET reduction_multi DIR alg AND_FRONT)
 build_unit_test(TARGET reduction_multi_fail DIR alg SHOULDFAIL AND_FRONT)
 build_unit_test(TARGET input_buffer DIR alg AND_FRONT)
+build_unit_test(TARGET floyd DIR alg)
 
 build_unit_test(TARGET tuple DIR alg)
 build_unit_test(TARGET tuple_pipeline DIR alg)
@@ -346,3 +366,19 @@ build_single_experiment_test(TARGET depthwise_separable_conv DIR experiment)
 ## Build padre files
 build_padre()
 build_padre(CONCRETE_BOUNDS)
+
+add_executable(haliver tests/haliver.cpp)
+
+target_link_libraries(haliver PRIVATE Halide::Halide)
+
+add_custom_command(
+  OUTPUT haliver.c
+  COMMAND ./haliver
+  DEPENDS haliver
+  VERBATIM
+)
+
+add_custom_target(
+  haliver_examples ALL
+  DEPENDS haliver.c
+)

@@ -8,7 +8,7 @@ int read_args(int argc, char** argv, int& schedule, bool& only_memory, bool& fro
     non_unique = false;
     std::string front_s = "front";
     std::string only_memory_s = "mem";
-    std::string non_unique_s = "-non_unique";
+    std::string non_unique_s = "non_unique";
     std::string schedule_s = "schedule";
     
     if(argc == 1){

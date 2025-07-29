@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
     .split(r, r_out, r_in, 42/8, TailStrategy::GuardWithIf)
     ;
 
-  Var par("par");
+  Var par("par"); 
   Func out_inter("out_inter");
   out_inter = out.update().rfactor(r_out, par);
   out_inter.compute_root()
@@ -57,6 +57,6 @@ int main(int argc, char *argv[]) {
     name += "_mem";
   }
   out.translate_to_pvl(name +"_front.pvl", {}, pipeline_anns); 
-  out.compile_to_c(name + "-non-unique"+ ".c" , {}, pipeline_anns, name, new_target, mem_only, false);
+  out.compile_to_c(name + "_non_unique"+ ".c" , {}, pipeline_anns, name, new_target, mem_only, false);
   out.compile_to_c(name + ".c" , {}, pipeline_anns, name, new_target, mem_only, true);
 }

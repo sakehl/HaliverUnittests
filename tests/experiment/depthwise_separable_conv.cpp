@@ -9,7 +9,7 @@ void create_pipeline(std::string name, bool non_unique);
 int main(int argc, char *argv[]) {
     std::string name = argv[1];
     create_pipeline(name, false);
-    create_pipeline(name+"-non_unique", true);
+    create_pipeline(name+"_non_unique", true);
 }
 
 void create_pipeline(std::string name, bool non_unique){
@@ -202,5 +202,5 @@ void create_pipeline(std::string name, bool non_unique){
     set_bounds({{0, CO}, {0, W}, {0, H}, {0, N}}, output.output_buffer());
 
     Target new_target = standard_target();
-    output.compile_to_c(name + ".c", {input, depthwise_filter, pointwise_filter, bias}, {}, name, new_target, true, non_unique);
+    output.compile_to_c(name + ".c", {input, depthwise_filter, pointwise_filter, bias}, {}, name, new_target, true, !non_unique);
 }

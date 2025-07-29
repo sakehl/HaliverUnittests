@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 using namespace Halide;
+void create_pipeline(std::string name, int schedule, bool front, bool only_memory, bool non_unique);
 
 int main(int argc, char *argv[]) {
   int schedule; 
@@ -10,6 +11,11 @@ int main(int argc, char *argv[]) {
   std::string name;
   int res = read_args(argc, argv, schedule, only_memory, front, non_unique, name);
   if(res != 0) return res;
+
+  create_pipeline(name, schedule, front, only_memory, non_unique);
+}
+
+void create_pipeline(std::string name, int schedule, bool front, bool only_memory, bool non_unique){
 
   const int num_rows = 2048;
   const int num_cols = 2048;
@@ -164,6 +170,6 @@ int main(int argc, char *argv[]) {
   if(front) {
       result_.translate_to_pvl(name + ".pvl", {}, {}); 
   } else {
-      result_.compile_to_c(name + ".c" , {A_, B_, C_}, {}, name, new_target, only_memory, non_unique);
+      result_.compile_to_c(name + ".c" , {A_, B_, C_}, {}, name, new_target, only_memory, !non_unique);
   }
 }

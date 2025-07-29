@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 using namespace Halide;
+void create_pipeline(std::string name, int schedule, bool front, bool only_memory, bool non_unique);
 
 int main(int argc, char *argv[]) {
   int schedule; 
@@ -10,6 +11,11 @@ int main(int argc, char *argv[]) {
   std::string name;
   int res = read_args(argc, argv, schedule, only_memory, front, non_unique, name);
   if(res != 0) return res;
+
+  create_pipeline(name, schedule, front, only_memory, non_unique);
+}
+
+void create_pipeline(std::string name, int schedule, bool front, bool only_memory, bool non_unique){
 
   /* Halide algorithm */
   const int N = 5, CI = 128, CO = 128, W = 100, H = 80;
@@ -92,6 +98,6 @@ int main(int argc, char *argv[]) {
   if(front) {
     relu.translate_to_pvl(name + ".pvl", {}, {}); 
   } else {
-    relu.compile_to_c(name + ".c" , {input, filter, bias}, {}, name, new_target, only_memory, non_unique);
+    relu.compile_to_c(name + ".c" , {input, filter, bias}, {}, name, new_target, only_memory, !non_unique);
   }
 }

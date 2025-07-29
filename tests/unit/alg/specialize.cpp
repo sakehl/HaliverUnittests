@@ -41,6 +41,6 @@ int main(int argc, char *argv[]) {
     name += "_mem";
   }
   out.translate_to_pvl(name +"_front.pvl", {choose}, pipeline_anns); 
-  out.compile_to_c(name + "-non-unique"+ ".c" , {choose}, pipeline_anns, name, new_target, mem_only, false);
+  out.compile_to_c(name + "_non_unique"+ ".c" , {choose}, pipeline_anns, name, new_target, mem_only, false);
   out.compile_to_c(name + ".c" , {choose}, pipeline_anns, name, new_target, mem_only, true);
 }

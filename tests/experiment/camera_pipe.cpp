@@ -341,7 +341,7 @@ void create_pipeline(std::string name, bool non_unique);
 int main(int argc, char *argv[]) {
     std::string name = argv[1];
     create_pipeline(name, false);
-    create_pipeline(name+"-non_unique", true);
+    create_pipeline(name+"_non_unique", true);
 }
 
 void create_pipeline(std::string name, bool non_unique){
@@ -457,7 +457,7 @@ void create_pipeline(std::string name, bool non_unique){
     /* End Schedule */
 
     Target new_target = standard_target();
-    processed.compile_to_c(name + ".c", {input, matrix_3200, matrix_7000}, {}, name, new_target, true, non_unique);
+    processed.compile_to_c(name + ".c", {input, matrix_3200, matrix_7000}, {}, name, new_target, true, !non_unique);
     processed.compile_to_pvl(name + ".pvl", {input, matrix_3200, matrix_7000}, {}, name, new_target, true);
 
     return;
