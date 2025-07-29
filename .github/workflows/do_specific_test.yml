@@ -67,14 +67,14 @@ jobs:
   # This workflow contains a single job called "greet"
   compile_vercors:
     # The type of runner that the job will run on
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Clone VerCors
         uses: actions/checkout@v4
         with:
           repository: 'utwente-fmt/vercors'
           path: '.'
-          ref: 'AddSMTSolver'
+          ref: 'fix-encodepointerarray'
       
       - name: Cache dependencies and compilation\
         id: cache-vercors-build
