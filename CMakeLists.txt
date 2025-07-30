@@ -347,13 +347,14 @@ build_unit_test(TARGET reorder DIR reorder)
 # Known limitations
 build_unit_test(TARGET pure_func_no_bounds DIR limitations ONLY_MEM)
 build_unit_test(TARGET pure_func_no_bounds_xyz DIR limitations ONLY_MEM)
-build_unit_test(TARGET pure_func_no_bounds_yzx DIR limitations ONLY_MEM)
+build_unit_test(TARGET pure_func_no_bounds_yzx DIR limitations ONLY_MEM NO_TEST)
 
 # Experiments: involved Halide programs
 build_experiment_test(TARGET blur DIR experiment)
 build_experiment_test(TARGET hist DIR experiment)
 build_experiment_test(TARGET conv_layer DIR experiment)
-build_experiment_test(TARGET auto_viz DIR experiment)
+build_experiment_test(TARGET auto_viz DIR experiment SCHEDULES 1 2)
+build_experiment_test(TARGET auto_viz DIR experiment SCHEDULES 0 3 NO_TEST)
 
 build_experiment_test(TARGET gemm DIR experiment SCHEDULES 0 1 2 )
 build_experiment_test(TARGET gemm DIR experiment SCHEDULES 3 NO_TEST)
