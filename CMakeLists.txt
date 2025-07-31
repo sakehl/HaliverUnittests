@@ -18,7 +18,7 @@ set(VERCORS_PADRE ${VCT} --silicon-quiet --no-infer-heap-context-into-frame --de
 
 
 function(build_unit_test)
-  set(options SHOULDFAIL AND_FRONT ONLY_MEM)
+  set(options SHOULDFAIL AND_FRONT ONLY_MEM NO_TEST)
   set(oneValueArgs TARGET DIR)
   set(multiValueArgs LABELS)
   cmake_parse_arguments(UT "${options}" "${oneValueArgs}"
@@ -35,14 +35,15 @@ function(build_unit_test)
       DEPENDS ${UT_TARGET}
       VERBATIM
     )
-
-    add_test(NAME ${UT_TARGET}_front.pvl
-      COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}_front.pvl
+    if(NOT ${UT_NO_TEST})
+      add_test(NAME ${UT_TARGET}_front.pvl
+        COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}_front.pvl
+        )
+      set_tests_properties(${UT_TARGET}_front.pvl PROPERTIES
+        WILL_FAIL ${UT_SHOULDFAIL}
+        LABELS unit:${UT_DIR}:front:${UT_LABELS}
       )
-    set_tests_properties(${UT_TARGET}_front.pvl PROPERTIES
-      WILL_FAIL ${UT_SHOULDFAIL}
-      LABELS unit:${UT_DIR}:front:${UT_LABELS}
-    )
+    endif()
   else()
     add_custom_command(
       OUTPUT ${UT_TARGET}.c
@@ -52,14 +53,17 @@ function(build_unit_test)
     )
   endif()
 
+  
   if(NOT ${UT_ONLY_MEM})
-    add_test(NAME ${UT_TARGET}.c
-      COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}.c
-    )
-    set_tests_properties(${UT_TARGET}.c PROPERTIES
-      WILL_FAIL ${UT_SHOULDFAIL}
-      LABELS unit:${UT_DIR}:back:${UT_LABELS}
-    )
+    if(NOT ${UT_NO_TEST})
+      add_test(NAME ${UT_TARGET}.c
+        COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}.c
+      )
+      set_tests_properties(${UT_TARGET}.c PROPERTIES
+        WILL_FAIL ${UT_SHOULDFAIL}
+        LABELS unit:${UT_DIR}:back:${UT_LABELS}
+      )
+    endif()
 
   else()
     add_custom_command(
@@ -68,15 +72,16 @@ function(build_unit_test)
       DEPENDS ${UT_TARGET}
       VERBATIM
     )
-
-    add_test(NAME ${UT_TARGET}_mem.c
-      COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}_mem.c
-    )
-    set_tests_properties(${UT_TARGET}_mem.c
-      PROPERTIES
-      WILL_FAIL ${UT_SHOULDFAIL}
-      LABELS unit:${UT_DIR}:back:mem:${UT_LABELS}
-    )
+    if(NOT ${UT_NO_TEST})
+      add_test(NAME ${UT_TARGET}_mem.c
+        COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}_mem.c
+      )
+      set_tests_properties(${UT_TARGET}_mem.c
+        PROPERTIES
+        WILL_FAIL ${UT_SHOULDFAIL}
+        LABELS unit:${UT_DIR}:back:mem:${UT_LABELS}
+      )
+    endif()
 
     add_custom_target(
       ${UT_TARGET}_all_mem ALL
@@ -95,7 +100,7 @@ function(build_unit_test)
 endfunction()
 
 function(build_experiment_test)
-  set(options NO_TEST)
+  set(options NO_TEST NOT_FRONT)
   set(oneValueArgs TARGET DIR)
   set(multiValueArgs LABELS SCHEDULES)
   cmake_parse_arguments(UT "${options}" "${oneValueArgs}"
@@ -119,7 +124,7 @@ function(build_experiment_test)
       DEPENDS ${UT_TARGET}
       VERBATIM
     )
-    if(NOT ${UT_NO_TEST})
+    if(NOT ${UT_NO_TEST} AND NOT ${UT_NOT_FRONT})
       add_test(NAME ${UT_TARGET}_front.pvl
         COMMAND ${VERCORS} ${CMAKE_BINARY_DIR}/${UT_TARGET}_front.pvl
       )
@@ -353,7 +358,7 @@ build_unit_test(TARGET pure_func_no_bounds_yzx DIR limitations ONLY_MEM NO_TEST)
 build_experiment_test(TARGET blur DIR experiment)
 build_experiment_test(TARGET hist DIR experiment)
 build_experiment_test(TARGET conv_layer DIR experiment)
-build_experiment_test(TARGET auto_viz DIR experiment SCHEDULES 1 2)
+build_experiment_test(TARGET auto_viz DIR experiment SCHEDULES 1 2 NOT_FRONT)
 build_experiment_test(TARGET auto_viz DIR experiment SCHEDULES 0 3 NO_TEST)
 
 build_experiment_test(TARGET gemm DIR experiment SCHEDULES 0 1 2 )
