@@ -93,12 +93,17 @@ def color_result_line(res_nr, n_unique, avr_t_unique, avr_v_unique, n_normal, av
             current_line += "& "
     elif res_nr ==3:
         # For timeout we print no time
-        current_line += f"& {n_unique} & - & -"
-        current_line += f"& {n_normal} & - & -"
+        if(n_normal > 0):
+            current_line += f"& {n_normal} & - & -"
+        else :
+            current_line += f"& 0 &  & "
+        if(n_unique > 0):
+            current_line += f"& {n_unique} & - & -"
+        else :
+            current_line += f"& 0 &  & "
     else:
-        current_line += f"& {n_unique} & {avr_t_unique} & {avr_v_unique}"
         current_line += f"& {n_normal} & {avr_t_normal} & {avr_v_normal}"
-
+        current_line += f"& {n_unique} & {avr_t_unique} & {avr_v_unique}"
     
     return current_line
 
@@ -161,8 +166,8 @@ def generate_latex_tabular_exp(experiments, is_mem: bool=False):
             avr_t_normal = get_avr(times_t_normal)
             avr_v_unique = get_avr(times_v_unique)
             avr_v_normal = get_avr(times_v_normal)
-            current_line += color_result_line(i, len(times_t_unique), avr_t_unique, 
-                                                  avr_v_unique, len(times_t_normal), avr_t_normal, avr_v_normal)
+            current_line += color_result_line(i, len(times_t_unique), avr_t_unique, avr_v_unique,
+                                                 len(times_t_normal), avr_t_normal, avr_v_normal)
             if i == 0 and len(times_t_unique)>0 and len(times_t_normal)>0:
                 total_normal += avr_t_normal
                 total_v_normal += avr_v_normal
