@@ -109,7 +109,7 @@ jobs:
           -L unit -L back -LE mem,
           -L front,
           -L padre -L CB,
-          -L padre -LE CB
+          -L padre -LE CB -E SolveDirectionHalide -E PerformIterationHalide
           ]
     runs-on: ubuntu-22.04
     continue-on-error: true
