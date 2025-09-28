@@ -72,9 +72,9 @@ jobs:
       - name: Clone VerCors
         uses: actions/checkout@v4
         with:
-          repository: 'utwente-fmt/vercors'
+          repository: 'sakehl/vercors'
           path: '.'
-          ref: 'fix-encodepointerarray'
+          ref: 'thesis-artifact-lars'
       
       - name: Cache dependencies and compilation\
         id: cache-vercors-build
