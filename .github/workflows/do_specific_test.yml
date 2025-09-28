@@ -25,7 +25,7 @@ jobs:
         with:
           repository: 'sakehl/Halide'
           path: '.'
-          ref: 'annotated_halide'
+          ref: 'thesis-artifact-v1.0'
 
       - name: Make build directory
         run: mkdir -p build
